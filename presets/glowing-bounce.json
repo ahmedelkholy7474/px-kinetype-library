@@ -1,0 +1,21 @@
+{
+  "id": "glowing-bounce",
+  "name": "Glowing Bounce",
+  "category": "slide",
+  "version": 1,
+  "added": "2026-10-29",
+  "source": "text_animation.mp4 @ 0:08",
+  "seed": 53,
+  "glow": { "size": 34, "intensity": 1.7, "settle": 0.3 },
+  "in": {
+    "animators": [
+      { "name": "Drop", "basedOn": "words", "stagger": 0.16, "dur": 0.9, "ease": "outBounce", "envelope": "from",
+        "props": { "position": [0, -110] } },
+      { "name": "Fade", "basedOn": "words", "stagger": 0.16, "dur": 0.2, "ease": "outCubic", "envelope": "from",
+        "props": { "opacity": 0 } },
+      { "name": "Heat", "basedOn": "words", "stagger": 0.16, "dur": 1.2, "ease": "inOutSine", "envelope": "from",
+        "props": { "fillColor": "#FFC21A" } }
+    ]
+  },
+  "out": { "mirror": true }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "advance-typewriter",
+  "name": "Advance Typewriter",
+  "category": "typewriter",
+  "version": 1,
+  "added": "2026-10-29",
+  "source": "text_animation.mp4 @ 0:02",
+  "seed": 23,
+  "glow": { "size": 26, "intensity": 1.5, "settle": 0.3 },
+  "in": {
+    "animators": [
+      { "name": "Reveal", "basedOn": "chars", "stagger": 0.055, "dur": 0.02, "ease": "step", "envelope": "from",
+        "props": { "opacity": 0 } },
+      { "name": "Burn", "basedOn": "chars", "stagger": 0.055, "dur": 0.45, "ease": "outExpo", "envelope": "from",
+        "props": { "fillColor": "#FF8A1A", "scale": [150, 170], "skew": 28, "rotation": -14, "blur": [3, 3] } },
+      { "name": "Scribble", "basedOn": "chars", "glyph": true, "stagger": 0.055, "dur": 0.14, "ease": "linear", "envelope": "gate",
+        "mod": { "type": "flicker", "min": 0.2, "max": 1, "rate": 24 },
+        "charRange": "unicode",
+        "props": { "charOffset": 9 } }
+    ]
+  },
+  "out": { "mirror": true }
+}

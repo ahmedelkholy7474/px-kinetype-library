@@ -1,0 +1,677 @@
+{
+ "name": "PX-Kinetype Library",
+ "schema": 1,
+ "updated": "2026-10-29T13:29:46.142Z",
+ "categories": [
+  {
+   "id": "all",
+   "name": "All",
+   "icon": "all",
+   "color": "#5B6CFF"
+  },
+  {
+   "id": "typewriter",
+   "name": "Typewriter",
+   "icon": "typewriter",
+   "color": "#8B5CFF"
+  },
+  {
+   "id": "slide",
+   "name": "Slide & Pop",
+   "icon": "slide",
+   "color": "#C04CFF"
+  },
+  {
+   "id": "pixel",
+   "name": "Pixel & Glitch",
+   "icon": "pixel",
+   "color": "#E040C8"
+  },
+  {
+   "id": "kinetic",
+   "name": "Wave & Kinetic",
+   "icon": "wave",
+   "color": "#F0508A"
+  },
+  {
+   "id": "3d",
+   "name": "3D",
+   "icon": "cube",
+   "color": "#E0703A"
+  },
+  {
+   "id": "glow",
+   "name": "Glow",
+   "icon": "glow",
+   "color": "#E8A030"
+  }
+ ],
+ "presets": [
+  {
+   "id": "pixelate-typewriter",
+   "name": "Pixelate Typewriter",
+   "category": "pixel",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "text_animation.mp4 @ 0:00",
+   "seed": 11,
+   "glow": {
+    "size": 14,
+    "intensity": 1.3,
+    "settle": 0.3
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Reveal",
+      "basedOn": "chars",
+      "stagger": 0.05,
+      "dur": 0.02,
+      "ease": "step",
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      }
+     },
+     {
+      "name": "Pixel Cursor",
+      "basedOn": "chars",
+      "glyph": true,
+      "stagger": 0.05,
+      "dur": 0.13,
+      "ease": "linear",
+      "envelope": "gate",
+      "props": {
+       "charValue": 9608,
+       "fillColor": "#FF7A1A"
+      }
+     },
+     {
+      "name": "Pixel Jitter",
+      "basedOn": "chars",
+      "stagger": 0.05,
+      "dur": 0.13,
+      "ease": "linear",
+      "envelope": "gate",
+      "mod": {
+       "type": "flicker",
+       "min": -1,
+       "max": 1,
+       "rate": 30
+      },
+      "props": {
+       "position": [
+        0,
+        -8
+       ],
+       "scale": [
+        100,
+        135
+       ]
+      }
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "advance-typewriter",
+   "name": "Advance Typewriter",
+   "category": "typewriter",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "text_animation.mp4 @ 0:02",
+   "seed": 23,
+   "glow": {
+    "size": 26,
+    "intensity": 1.5,
+    "settle": 0.3
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Reveal",
+      "basedOn": "chars",
+      "stagger": 0.055,
+      "dur": 0.02,
+      "ease": "step",
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      }
+     },
+     {
+      "name": "Burn",
+      "basedOn": "chars",
+      "stagger": 0.055,
+      "dur": 0.45,
+      "ease": "outExpo",
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FF8A1A",
+       "scale": [
+        150,
+        170
+       ],
+       "skew": 28,
+       "rotation": -14,
+       "blur": [
+        3,
+        3
+       ]
+      }
+     },
+     {
+      "name": "Scribble",
+      "basedOn": "chars",
+      "glyph": true,
+      "stagger": 0.055,
+      "dur": 0.14,
+      "ease": "linear",
+      "envelope": "gate",
+      "mod": {
+       "type": "flicker",
+       "min": 0.2,
+       "max": 1,
+       "rate": 24
+      },
+      "charRange": "unicode",
+      "props": {
+       "charOffset": 9
+      }
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "glowing",
+   "name": "Glowing",
+   "category": "glow",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "text_animation.mp4 @ 0:04",
+   "seed": 37,
+   "glow": {
+    "size": 34,
+    "intensity": 1.8,
+    "settle": 0.3
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "stagger": 0.3,
+      "dur": 0.45,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        14,
+        14
+       ]
+      }
+     },
+     {
+      "name": "Heat",
+      "basedOn": "words",
+      "stagger": 0.3,
+      "dur": 1.1,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FF8A1A"
+      }
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "extras": [
+    {
+     "type": "headStar",
+     "color": "#FFA030"
+    }
+   ]
+  },
+  {
+   "id": "right-slide-in",
+   "name": "Right Slide In",
+   "category": "slide",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "text_animation.mp4 @ 0:06",
+   "seed": 41,
+   "glow": {
+    "size": 28,
+    "intensity": 1.5,
+    "settle": 0.3
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Slide",
+      "basedOn": "words",
+      "stagger": 0.18,
+      "dur": 0.8,
+      "ease": "outExpo",
+      "envelope": "from",
+      "props": {
+       "position": [
+        260,
+        0
+       ],
+       "opacity": 0,
+       "blur": [
+        24,
+        0
+       ]
+      }
+     },
+     {
+      "name": "Heat",
+      "basedOn": "words",
+      "stagger": 0.18,
+      "dur": 1,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FF9A2A"
+      }
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "glowing-bounce",
+   "name": "Glowing Bounce",
+   "category": "slide",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "text_animation.mp4 @ 0:08",
+   "seed": 53,
+   "glow": {
+    "size": 34,
+    "intensity": 1.7,
+    "settle": 0.3
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Drop",
+      "basedOn": "words",
+      "stagger": 0.16,
+      "dur": 0.9,
+      "ease": "outBounce",
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        -110
+       ]
+      }
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "stagger": 0.16,
+      "dur": 0.2,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      }
+     },
+     {
+      "name": "Heat",
+      "basedOn": "words",
+      "stagger": 0.16,
+      "dur": 1.2,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FFC21A"
+      }
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "decode-scramble",
+   "name": "Decode Scramble",
+   "category": "pixel",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "text_animation_2.mp4",
+   "seed": 67,
+   "glow": {
+    "size": 16,
+    "intensity": 1.2,
+    "settle": 0.25
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Pop",
+      "basedOn": "chars",
+      "order": "random",
+      "stagger": 0.018,
+      "dur": 0.02,
+      "ease": "step",
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      }
+     },
+     {
+      "name": "Scramble",
+      "basedOn": "chars",
+      "glyph": true,
+      "order": "random",
+      "stagger": 0.018,
+      "dur": 0.5,
+      "ease": "step",
+      "envelope": "from",
+      "mod": {
+       "type": "flicker",
+       "min": 0.15,
+       "max": 1,
+       "rate": 20
+      },
+      "props": {
+       "charOffset": 11
+      }
+     },
+     {
+      "name": "Symbol *",
+      "basedOn": "chars",
+      "glyph": true,
+      "order": "random",
+      "stagger": 0.018,
+      "dur": 0.5,
+      "ease": "step",
+      "envelope": "from",
+      "mod": {
+       "type": "chance",
+       "p": 0.12,
+       "rate": 14
+      },
+      "props": {
+       "charValue": 42
+      }
+     },
+     {
+      "name": "Symbol #",
+      "basedOn": "chars",
+      "glyph": true,
+      "order": "random",
+      "stagger": 0.018,
+      "dur": 0.5,
+      "ease": "step",
+      "envelope": "from",
+      "mod": {
+       "type": "chance",
+       "p": 0.08,
+       "rate": 17
+      },
+      "props": {
+       "charValue": 35
+      }
+     },
+     {
+      "name": "Symbol <",
+      "basedOn": "chars",
+      "glyph": true,
+      "order": "random",
+      "stagger": 0.018,
+      "dur": 0.5,
+      "ease": "step",
+      "envelope": "from",
+      "mod": {
+       "type": "chance",
+       "p": 0.08,
+       "rate": 20
+      },
+      "props": {
+       "charValue": 60
+      }
+     },
+     {
+      "name": "Symbol +",
+      "basedOn": "chars",
+      "glyph": true,
+      "order": "random",
+      "stagger": 0.018,
+      "dur": 0.5,
+      "ease": "step",
+      "envelope": "from",
+      "mod": {
+       "type": "chance",
+       "p": 0.06,
+       "rate": 23
+      },
+      "props": {
+       "charValue": 43
+      }
+     },
+     {
+      "name": "Baseline",
+      "basedOn": "chars",
+      "order": "random",
+      "stagger": 0.018,
+      "dur": 0.55,
+      "ease": "outExpo",
+      "envelope": "from",
+      "mod": {
+       "type": "random",
+       "min": -1,
+       "max": 1
+      },
+      "props": {
+       "position": [
+        0,
+        55
+       ]
+      }
+     },
+     {
+      "name": "Size",
+      "basedOn": "chars",
+      "order": "random",
+      "stagger": 0.018,
+      "dur": 0.45,
+      "ease": "outBack",
+      "easeAmount": 1.7,
+      "envelope": "from",
+      "mod": {
+       "type": "random",
+       "min": 0,
+       "max": 1
+      },
+      "props": {
+       "scale": [
+        145,
+        145
+       ]
+      }
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "extras": [
+    {
+     "type": "flashRects",
+     "count": 5,
+     "colors": [
+      "#C6FF1A",
+      "#FFFFFF"
+     ]
+    },
+    {
+     "type": "sparkles",
+     "count": 16,
+     "color": "#FFFFFF"
+    },
+    {
+     "type": "cursor",
+     "color": "#FFFFFF"
+    }
+   ]
+  },
+  {
+   "id": "label-pop",
+   "name": "Label Pop",
+   "category": "slide",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "text_animation_2.mp4 @ 0:01",
+   "seed": 71,
+   "glow": {
+    "size": 24,
+    "intensity": 2,
+    "settle": 0.35
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Pop",
+      "basedOn": "words",
+      "stagger": 0.3,
+      "dur": 0.45,
+      "ease": "outBack",
+      "easeAmount": 2.4,
+      "envelope": "from",
+      "props": {
+       "scale": [
+        30,
+        30
+       ]
+      }
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "stagger": 0.3,
+      "dur": 0.25,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        16,
+        16
+       ]
+      }
+     },
+     {
+      "name": "Heat",
+      "basedOn": "words",
+      "stagger": 0.3,
+      "dur": 0.9,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "fillColor": "#C6FF1A"
+      }
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "color-kinetic",
+   "name": "Color Word Kinetic",
+   "category": "kinetic",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "text_animation_3.mp4",
+   "seed": 83,
+   "layout": "sequence",
+   "palette": [
+    "#2EE6FF",
+    "#FFE14A",
+    "#FF5A4A",
+    "#9B5CFF",
+    "#FFB01A",
+    "#2EE6FF"
+   ],
+   "glow": {
+    "size": 26,
+    "intensity": 1.4,
+    "settle": 0.45
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Reveal",
+      "basedOn": "chars",
+      "stagger": 0.04,
+      "dur": 0.4,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        18,
+        6
+       ],
+       "position": [
+        -12,
+        0
+       ]
+      }
+     },
+     {
+      "name": "Tint",
+      "basedOn": "chars",
+      "start": 0.05,
+      "stagger": 0.05,
+      "dur": 0.9,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "fillColor": "palette"
+      }
+     }
+    ]
+   },
+   "out": {
+    "animators": [
+     {
+      "name": "Vanish",
+      "basedOn": "chars",
+      "order": "backward",
+      "stagger": 0.03,
+      "dur": 0.35,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        16,
+        4
+       ]
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

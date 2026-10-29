@@ -1,0 +1,21 @@
+{
+  "id": "label-pop",
+  "name": "Label Pop",
+  "category": "slide",
+  "version": 1,
+  "added": "2026-10-29",
+  "source": "text_animation_2.mp4 @ 0:01",
+  "seed": 71,
+  "glow": { "size": 24, "intensity": 2.0, "settle": 0.35 },
+  "in": {
+    "animators": [
+      { "name": "Pop", "basedOn": "words", "stagger": 0.3, "dur": 0.45, "ease": "outBack", "easeAmount": 2.4, "envelope": "from",
+        "props": { "scale": [30, 30] } },
+      { "name": "Fade", "basedOn": "words", "stagger": 0.3, "dur": 0.25, "ease": "outCubic", "envelope": "from",
+        "props": { "opacity": 0, "blur": [16, 16] } },
+      { "name": "Heat", "basedOn": "words", "stagger": 0.3, "dur": 0.9, "ease": "inOutSine", "envelope": "from",
+        "props": { "fillColor": "#C6FF1A" } }
+    ]
+  },
+  "out": { "mirror": true }
+}

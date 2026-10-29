@@ -1,0 +1,9 @@
+[
+  { "id": "all",        "name": "All",            "icon": "all",        "color": "#5B6CFF" },
+  { "id": "typewriter", "name": "Typewriter",     "icon": "typewriter", "color": "#8B5CFF" },
+  { "id": "slide",      "name": "Slide & Pop",    "icon": "slide",      "color": "#C04CFF" },
+  { "id": "pixel",      "name": "Pixel & Glitch", "icon": "pixel",      "color": "#E040C8" },
+  { "id": "kinetic",    "name": "Wave & Kinetic", "icon": "wave",       "color": "#F0508A" },
+  { "id": "3d",         "name": "3D",             "icon": "cube",       "color": "#E0703A" },
+  { "id": "glow",       "name": "Glow",           "icon": "glow",       "color": "#E8A030" }
+]

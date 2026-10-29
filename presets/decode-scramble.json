@@ -1,0 +1,184 @@
+{
+  "id": "decode-scramble",
+  "name": "Decode Scramble",
+  "category": "pixel",
+  "version": 1,
+  "added": "2026-10-29",
+  "source": "text_animation_2.mp4",
+  "seed": 67,
+  "glow": {
+    "size": 16,
+    "intensity": 1.2,
+    "settle": 0.25
+  },
+  "in": {
+    "animators": [
+      {
+        "name": "Pop",
+        "basedOn": "chars",
+        "order": "random",
+        "stagger": 0.018,
+        "dur": 0.02,
+        "ease": "step",
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        }
+      },
+      {
+        "name": "Scramble",
+        "basedOn": "chars",
+        "glyph": true,
+        "order": "random",
+        "stagger": 0.018,
+        "dur": 0.5,
+        "ease": "step",
+        "envelope": "from",
+        "mod": {
+          "type": "flicker",
+          "min": 0.15,
+          "max": 1,
+          "rate": 20
+        },
+        "props": {
+          "charOffset": 11
+        }
+      },
+      {
+        "name": "Symbol *",
+        "basedOn": "chars",
+        "glyph": true,
+        "order": "random",
+        "stagger": 0.018,
+        "dur": 0.5,
+        "ease": "step",
+        "envelope": "from",
+        "mod": {
+          "type": "chance",
+          "p": 0.12,
+          "rate": 14
+        },
+        "props": {
+          "charValue": 42
+        }
+      },
+      {
+        "name": "Symbol #",
+        "basedOn": "chars",
+        "glyph": true,
+        "order": "random",
+        "stagger": 0.018,
+        "dur": 0.5,
+        "ease": "step",
+        "envelope": "from",
+        "mod": {
+          "type": "chance",
+          "p": 0.08,
+          "rate": 17
+        },
+        "props": {
+          "charValue": 35
+        }
+      },
+      {
+        "name": "Symbol <",
+        "basedOn": "chars",
+        "glyph": true,
+        "order": "random",
+        "stagger": 0.018,
+        "dur": 0.5,
+        "ease": "step",
+        "envelope": "from",
+        "mod": {
+          "type": "chance",
+          "p": 0.08,
+          "rate": 20
+        },
+        "props": {
+          "charValue": 60
+        }
+      },
+      {
+        "name": "Symbol +",
+        "basedOn": "chars",
+        "glyph": true,
+        "order": "random",
+        "stagger": 0.018,
+        "dur": 0.5,
+        "ease": "step",
+        "envelope": "from",
+        "mod": {
+          "type": "chance",
+          "p": 0.06,
+          "rate": 23
+        },
+        "props": {
+          "charValue": 43
+        }
+      },
+      {
+        "name": "Baseline",
+        "basedOn": "chars",
+        "order": "random",
+        "stagger": 0.018,
+        "dur": 0.55,
+        "ease": "outExpo",
+        "envelope": "from",
+        "mod": {
+          "type": "random",
+          "min": -1,
+          "max": 1
+        },
+        "props": {
+          "position": [
+            0,
+            55
+          ]
+        }
+      },
+      {
+        "name": "Size",
+        "basedOn": "chars",
+        "order": "random",
+        "stagger": 0.018,
+        "dur": 0.45,
+        "ease": "outBack",
+        "easeAmount": 1.7,
+        "envelope": "from",
+        "mod": {
+          "type": "random",
+          "min": 0,
+          "max": 1
+        },
+        "props": {
+          "scale": [
+            145,
+            145
+          ]
+        }
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "extras": [
+    {
+      "type": "flashRects",
+      "count": 5,
+      "colors": [
+        "#C6FF1A",
+        "#FFFFFF"
+      ]
+    },
+    {
+      "type": "sparkles",
+      "count": 16,
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "cursor",
+      "color": "#FFFFFF"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "color-kinetic",
+  "name": "Color Word Kinetic",
+  "category": "kinetic",
+  "version": 1,
+  "added": "2026-10-29",
+  "source": "text_animation_3.mp4",
+  "seed": 83,
+  "layout": "sequence",
+  "palette": ["#2EE6FF", "#FFE14A", "#FF5A4A", "#9B5CFF", "#FFB01A", "#2EE6FF"],
+  "glow": { "size": 26, "intensity": 1.4, "settle": 0.45 },
+  "in": {
+    "animators": [
+      { "name": "Reveal", "basedOn": "chars", "stagger": 0.04, "dur": 0.4, "ease": "outCubic", "envelope": "from",
+        "props": { "opacity": 0, "blur": [18, 6], "position": [-12, 0] } },
+      { "name": "Tint", "basedOn": "chars", "start": 0.05, "stagger": 0.05, "dur": 0.9, "ease": "inOutSine", "envelope": "from",
+        "props": { "fillColor": "palette" } }
+    ]
+  },
+  "out": {
+    "animators": [
+      { "name": "Vanish", "basedOn": "chars", "order": "backward", "stagger": 0.03, "dur": 0.35, "ease": "outCubic", "envelope": "from",
+        "props": { "opacity": 0, "blur": [16, 4] } }
+    ]
+  }
+}
