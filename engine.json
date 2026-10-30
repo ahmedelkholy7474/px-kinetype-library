@@ -1,0 +1,6 @@
+{
+  "arabic": {
+    "basedOn": "chars",
+    "keepGlyph": false
+  }
+}

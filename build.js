@@ -25,9 +25,11 @@ var presets = fs.readdirSync(presetDir)
     return ((a.order || 9999) - (b.order || 9999)) || cmp(a.added, b.added) || cmp(a.id, b.id);
   });
 
+var enginePath = path.join(dir, "engine.json");
 var lib = {
   name: "PX-Kinetype Library",
   schema: 1,
+  engine: fs.existsSync(enginePath) ? JSON.parse(fs.readFileSync(enginePath, "utf8")) : undefined,
   updated: new Date().toISOString(),
   categories: categories,
   presets: presets
