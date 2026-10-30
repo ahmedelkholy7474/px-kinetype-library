@@ -1,0 +1,31 @@
+{
+  "id": "focus-rise",
+  "name": "Focus Rise",
+  "category": "slide",
+  "version": 1,
+  "order": 12,
+  "added": "2026-10-30",
+  "source": "Comp_1_2.mp4",
+  "requires": "1.6",
+  "seed": 113,
+  "in": {
+    "animators": [
+      { "name": "Rise", "basedOn": "words", "start": 0.1, "stagger": 0.18, "dur": 0.75, "ease": "outQuart", "envelope": "from",
+        "props": { "position": [0, 45] } },
+      { "name": "Fade", "basedOn": "words", "start": 0.1, "stagger": 0.18, "dur": 0.6, "ease": "inOutSine", "envelope": "from",
+        "props": { "opacity": 0 } },
+      { "name": "Focus", "basedOn": "words", "start": 0.1, "stagger": 0.18, "dur": 0.95, "ease": "inOutSine", "envelope": "from",
+        "props": { "blur": [30, 30] } },
+      { "name": "Zoom", "basedOn": "lines", "dur": 1.1, "ease": "inOutCubic", "envelope": "from",
+        "props": { "scale": [125, 125], "tracking": 110 } }
+    ]
+  },
+  "out": {
+    "animators": [
+      { "name": "Shrink", "basedOn": "lines", "dur": 0.7, "ease": "inOutCubic", "envelope": "from",
+        "props": { "scale": [55, 55], "tracking": -180 } },
+      { "name": "Fade", "basedOn": "lines", "dur": 0.7, "ease": "inOutSine", "envelope": "from",
+        "props": { "opacity": 0, "blur": [100, 100] } }
+    ]
+  }
+}
