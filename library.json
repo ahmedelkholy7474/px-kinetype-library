@@ -7,7 +7,7 @@
    "keepGlyph": false
   }
  },
- "updated": "2026-10-30T19:51:39.482Z",
+ "updated": "2026-10-30T20:59:04.033Z",
  "categories": [
   {
    "id": "all",
@@ -1188,6 +1188,66 @@
   }
  ],
  "addons": [
+  {
+   "id": "squeezy-duplicator",
+   "name": "Squeezy Duplicator",
+   "version": 1,
+   "order": 0.5,
+   "status": "ready",
+   "requires": "2.0",
+   "description": "Deep-duplicate a comp: every precomp inside, at every level, becomes its own copy. Renames, folders and expressions follow.",
+   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"12\" height=\"12\" rx=\"2.5\"/><rect x=\"9\" y=\"9\" width=\"12\" height=\"12\" rx=\"2.5\" fill=\"currentColor\" fill-opacity=\".25\"/><path d=\"M15 13v4M13 15h4\" stroke-linecap=\"round\"/></svg>",
+   "colors": [
+    "#7a5cff",
+    "#2EE6FF"
+   ],
+   "runLabel": "Duplicate",
+   "params": [
+    {
+     "id": "suffix",
+     "label": "Suffix",
+     "type": "text",
+     "value": "_v2"
+    },
+    {
+     "id": "find",
+     "label": "Find in names",
+     "type": "text",
+     "value": ""
+    },
+    {
+     "id": "replace",
+     "label": "Replace with",
+     "type": "text",
+     "value": ""
+    },
+    {
+     "id": "keep",
+     "label": "Keep shared (names with…)",
+     "type": "text",
+     "value": ""
+    },
+    {
+     "id": "expressions",
+     "label": "Re-link expressions",
+     "type": "checkbox",
+     "value": true
+    },
+    {
+     "id": "folder",
+     "label": "Put copies in a new folder",
+     "type": "checkbox",
+     "value": true
+    },
+    {
+     "id": "open",
+     "label": "Open the new comp",
+     "type": "checkbox",
+     "value": true
+    }
+   ],
+   "script": "// Squeezy Duplicator: deep-duplicate comps so every nested precomp becomes its own copy\nvar roots = [];\nvar psel = app.project.selection;\nfor (var i = 0; i < psel.length; i++) if (psel[i] instanceof CompItem) roots.push(psel[i]);\nif (!roots.length && comp) roots.push(comp);\nif (!roots.length) return \"Select a comp in the Project panel (or open one).\";\n\nvar suffix = String(params.suffix || \"\"), find = String(params.find || \"\"), repl = String(params.replace || \"\");\nif (!suffix && !find) suffix = \"_copy\";\nvar keepWords = [];\nvar kw = String(params.keep || \"\").split(\",\");\nfor (var k = 0; k < kw.length; k++) { var w = kw[k].replace(/^\\s+|\\s+$/g, \"\"); if (w) keepWords.push(w.toLowerCase()); }\n\nfunction newName(n) {\n    var s = String(n);\n    if (find) s = s.split(find).join(repl);\n    if (suffix) s = s + suffix;\n    if (s === String(n)) s = s + \"_copy\";\n    return s;\n}\nfunction isShared(c) {\n    var n = String(c.name).toLowerCase();\n    for (var i = 0; i < keepWords.length; i++) if (n.indexOf(keepWords[i]) >= 0) return true;\n    return false;\n}\n\n// folders: one new folder per run, mirroring sub-folders of the originals\nvar baseFolder = roots[0].parentFolder, outFolder = null, sub = {};\nif (params.folder) {\n    outFolder = app.project.items.addFolder(newName(roots[0].name) + \" (Squeezy)\");\n    outFolder.parentFolder = baseFolder;\n}\nfunction folderFor(c) {\n    if (!outFolder) return c.parentFolder;\n    var pf = c.parentFolder;\n    if (!pf || pf === baseFolder || pf === app.project.rootFolder) return outFolder;\n    if (!sub[pf.id]) { sub[pf.id] = app.project.items.addFolder(pf.name); sub[pf.id].parentFolder = outFolder; }\n    return sub[pf.id];\n}\n\nvar map = {}, made = [], renames = [], shared = 0;\nfunction dup(c, isRoot) {\n    if (map[c.id]) return map[c.id];\n    if (!isRoot && isShared(c)) { map[c.id] = c; shared++; return c; }   // the comp you picked is always copied\n    var d = c.duplicate();\n    d.name = newName(c.name);\n    d.parentFolder = folderFor(c);\n    map[c.id] = d;\n    made.push(d);\n    renames.push([c.name, d.name]);\n    for (var i = 1; i <= d.numLayers; i++) {\n        var L = d.layer(i);\n        if (L.source && L.source instanceof CompItem) {\n            var nd = dup(L.source);\n            if (nd !== L.source) L.replaceSource(nd, false);\n        }\n    }\n    return d;\n}\nvar tops = [];\nfor (var r = 0; r < roots.length; r++) {\n    tops.push(dup(roots[r], true));\n}\n\n// point expressions at the new comps (comp(\"Old\") -> comp(\"New\"))\nvar fixed = 0;\nfunction fixExpr(group) {\n    for (var i = 1; i <= group.numProperties; i++) {\n        var p = group.property(i);\n        if (p.propertyType === PropertyType.PROPERTY) {\n            if (p.canSetExpression && p.expression) {\n                var e = p.expression, e2 = e;\n                for (var j = 0; j < renames.length; j++) {\n                    e2 = e2.split('comp(\"' + renames[j][0] + '\")').join('comp(\"' + renames[j][1] + '\")');\n                    e2 = e2.split(\"comp('\" + renames[j][0] + \"')\").join(\"comp('\" + renames[j][1] + \"')\");\n                }\n                if (e2 !== e) { try { p.expression = e2; fixed++; } catch (er) {} }\n            }\n        } else if (p.numProperties) fixExpr(p);\n    }\n}\nif (params.expressions) {\n    for (var m = 0; m < made.length; m++) for (var l = 1; l <= made[m].numLayers; l++) fixExpr(made[m].layer(l));\n}\nif (params.open && tops.length) { try { tops[0].openInViewer(); } catch (eo) {} }\n\nreturn \"Squeezy Duplicator: \" + made.length + \" comp\" + (made.length === 1 ? \"\" : \"s\") + \" copied\"\n    + (shared ? \", \" + shared + \" kept shared\" : \"\") + (fixed ? \", \" + fixed + \" expression\" + (fixed === 1 ? \"\" : \"s\") + \" re-linked\" : \"\");\n"
+  },
   {
    "id": "kashida-stretch",
    "name": "Kashida Stretch",

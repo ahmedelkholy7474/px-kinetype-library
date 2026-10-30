@@ -1,0 +1,60 @@
+{
+  "id": "squeezy-duplicator",
+  "name": "Squeezy Duplicator",
+  "version": 1,
+  "order": 0.5,
+  "status": "ready",
+  "requires": "2.0",
+  "description": "Deep-duplicate a comp: every precomp inside, at every level, becomes its own copy. Renames, folders and expressions follow.",
+  "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"12\" height=\"12\" rx=\"2.5\"/><rect x=\"9\" y=\"9\" width=\"12\" height=\"12\" rx=\"2.5\" fill=\"currentColor\" fill-opacity=\".25\"/><path d=\"M15 13v4M13 15h4\" stroke-linecap=\"round\"/></svg>",
+  "colors": [
+    "#7a5cff",
+    "#2EE6FF"
+  ],
+  "scriptFile": "duplicator.jsx",
+  "runLabel": "Duplicate",
+  "params": [
+    {
+      "id": "suffix",
+      "label": "Suffix",
+      "type": "text",
+      "value": "_v2"
+    },
+    {
+      "id": "find",
+      "label": "Find in names",
+      "type": "text",
+      "value": ""
+    },
+    {
+      "id": "replace",
+      "label": "Replace with",
+      "type": "text",
+      "value": ""
+    },
+    {
+      "id": "keep",
+      "label": "Keep shared (names with…)",
+      "type": "text",
+      "value": ""
+    },
+    {
+      "id": "expressions",
+      "label": "Re-link expressions",
+      "type": "checkbox",
+      "value": true
+    },
+    {
+      "id": "folder",
+      "label": "Put copies in a new folder",
+      "type": "checkbox",
+      "value": true
+    },
+    {
+      "id": "open",
+      "label": "Open the new comp",
+      "type": "checkbox",
+      "value": true
+    }
+  ]
+}
