@@ -2,7 +2,7 @@
   "id": "color-kinetic",
   "name": "Color Word Kinetic",
   "category": "kinetic",
-  "version": 2,
+  "version": 3,
   "added": "2026-10-29",
   "source": "text_animation_3.mp4",
   "seed": 83,
@@ -42,7 +42,7 @@
         "basedOn": "chars",
         "stagger": 0.04,
         "dur": 0.4,
-        "ease": "outCubic",
+        "ease": "inOutCubic",
         "envelope": "from",
         "props": {
           "position": [

@@ -7,7 +7,7 @@
    "keepGlyph": false
   }
  },
- "updated": "2026-10-30T18:30:39.361Z",
+ "updated": "2026-10-30T18:32:52.828Z",
  "categories": [
   {
    "id": "all",
@@ -254,7 +254,7 @@
    "id": "right-slide-in",
    "name": "Right Slide In",
    "category": "slide",
-   "version": 2,
+   "version": 3,
    "added": "2026-10-29",
    "source": "text_animation.mp4 @ 0:06",
    "seed": 41,
@@ -269,8 +269,8 @@
       "name": "Slide",
       "basedOn": "words",
       "stagger": 0.18,
-      "dur": 0.9,
-      "ease": "outQuart",
+      "dur": 1,
+      "ease": "inOutCubic",
       "envelope": "from",
       "props": {
        "position": [
@@ -283,7 +283,7 @@
       "name": "Fade",
       "basedOn": "words",
       "stagger": 0.18,
-      "dur": 0.6,
+      "dur": 0.7,
       "ease": "inOutSine",
       "envelope": "from",
       "props": {
@@ -622,7 +622,7 @@
    "id": "color-kinetic",
    "name": "Color Word Kinetic",
    "category": "kinetic",
-   "version": 2,
+   "version": 3,
    "added": "2026-10-29",
    "source": "text_animation_3.mp4",
    "seed": 83,
@@ -662,7 +662,7 @@
       "basedOn": "chars",
       "stagger": 0.04,
       "dur": 0.4,
-      "ease": "outCubic",
+      "ease": "inOutCubic",
       "envelope": "from",
       "props": {
        "position": [
