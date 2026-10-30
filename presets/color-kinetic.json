@@ -2,7 +2,7 @@
   "id": "color-kinetic",
   "name": "Color Word Kinetic",
   "category": "kinetic",
-  "version": 1,
+  "version": 2,
   "added": "2026-10-29",
   "source": "text_animation_3.mp4",
   "seed": 83,
@@ -26,15 +26,25 @@
         "name": "Reveal",
         "basedOn": "chars",
         "stagger": 0.04,
-        "dur": 0.4,
-        "ease": "outCubic",
+        "dur": 0.55,
+        "ease": "inOutSine",
         "envelope": "from",
         "props": {
           "opacity": 0,
           "blur": [
             18,
             6
-          ],
+          ]
+        }
+      },
+      {
+        "name": "Drift",
+        "basedOn": "chars",
+        "stagger": 0.04,
+        "dur": 0.4,
+        "ease": "outCubic",
+        "envelope": "from",
+        "props": {
           "position": [
             -12,
             0

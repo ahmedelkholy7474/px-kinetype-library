@@ -7,7 +7,7 @@
    "keepGlyph": false
   }
  },
- "updated": "2026-10-30T17:56:51.979Z",
+ "updated": "2026-10-30T18:30:39.361Z",
  "categories": [
   {
    "id": "all",
@@ -200,7 +200,7 @@
    "id": "glowing",
    "name": "Glowing",
    "category": "glow",
-   "version": 1,
+   "version": 2,
    "added": "2026-10-29",
    "source": "text_animation.mp4 @ 0:04",
    "seed": 37,
@@ -215,8 +215,8 @@
       "name": "Fade",
       "basedOn": "words",
       "stagger": 0.3,
-      "dur": 0.45,
-      "ease": "outCubic",
+      "dur": 0.55,
+      "ease": "inOutSine",
       "envelope": "from",
       "props": {
        "opacity": 0,
@@ -254,7 +254,7 @@
    "id": "right-slide-in",
    "name": "Right Slide In",
    "category": "slide",
-   "version": 1,
+   "version": 2,
    "added": "2026-10-29",
    "source": "text_animation.mp4 @ 0:06",
    "seed": 41,
@@ -269,14 +269,24 @@
       "name": "Slide",
       "basedOn": "words",
       "stagger": 0.18,
-      "dur": 0.8,
-      "ease": "outExpo",
+      "dur": 0.9,
+      "ease": "outQuart",
       "envelope": "from",
       "props": {
        "position": [
         260,
         0
-       ],
+       ]
+      }
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "stagger": 0.18,
+      "dur": 0.6,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
        "opacity": 0,
        "blur": [
         24,
@@ -306,7 +316,7 @@
    "id": "glowing-bounce",
    "name": "Glowing Bounce",
    "category": "slide",
-   "version": 1,
+   "version": 2,
    "added": "2026-10-29",
    "source": "text_animation.mp4 @ 0:08",
    "seed": 53,
@@ -335,8 +345,8 @@
       "name": "Fade",
       "basedOn": "words",
       "stagger": 0.16,
-      "dur": 0.2,
-      "ease": "outCubic",
+      "dur": 0.35,
+      "ease": "inOutSine",
       "envelope": "from",
       "props": {
        "opacity": 0
@@ -549,7 +559,7 @@
    "id": "label-pop",
    "name": "Label Pop",
    "category": "slide",
-   "version": 1,
+   "version": 2,
    "added": "2026-10-29",
    "source": "text_animation_2.mp4 @ 0:01",
    "seed": 71,
@@ -579,8 +589,8 @@
       "name": "Fade",
       "basedOn": "words",
       "stagger": 0.3,
-      "dur": 0.25,
-      "ease": "outCubic",
+      "dur": 0.35,
+      "ease": "inOutSine",
       "envelope": "from",
       "props": {
        "opacity": 0,
@@ -612,7 +622,7 @@
    "id": "color-kinetic",
    "name": "Color Word Kinetic",
    "category": "kinetic",
-   "version": 1,
+   "version": 2,
    "added": "2026-10-29",
    "source": "text_animation_3.mp4",
    "seed": 83,
@@ -636,15 +646,25 @@
       "name": "Reveal",
       "basedOn": "chars",
       "stagger": 0.04,
-      "dur": 0.4,
-      "ease": "outCubic",
+      "dur": 0.55,
+      "ease": "inOutSine",
       "envelope": "from",
       "props": {
        "opacity": 0,
        "blur": [
         18,
         6
-       ],
+       ]
+      }
+     },
+     {
+      "name": "Drift",
+      "basedOn": "chars",
+      "stagger": 0.04,
+      "dur": 0.4,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
        "position": [
         -12,
         0
@@ -691,7 +711,7 @@
    "id": "color-word-swap",
    "name": "Color Word Swap",
    "category": "kinetic",
-   "version": 1,
+   "version": 2,
    "added": "2026-10-29",
    "source": "590e72fc_720w.mp4",
    "requires": "1.6",
@@ -731,8 +751,8 @@
       "name": "Reveal",
       "basedOn": "chars",
       "stagger": 0.055,
-      "dur": 0.35,
-      "ease": "outCubic",
+      "dur": 0.5,
+      "ease": "inOutSine",
       "envelope": "from",
       "props": {
        "opacity": 0,
