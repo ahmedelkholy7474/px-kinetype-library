@@ -6,14 +6,47 @@
   "added": "2026-10-29",
   "source": "text_animation.mp4 @ 0:06",
   "seed": 41,
-  "glow": { "size": 28, "intensity": 1.5, "settle": 0.3 },
+  "glow": {
+    "size": 28,
+    "intensity": 1.5,
+    "settle": 0.3
+  },
   "in": {
     "animators": [
-      { "name": "Slide", "basedOn": "words", "stagger": 0.18, "dur": 0.8, "ease": "outExpo", "envelope": "from",
-        "props": { "position": [260, 0], "opacity": 0, "blur": [24, 0] } },
-      { "name": "Heat", "basedOn": "words", "stagger": 0.18, "dur": 1.0, "ease": "inOutSine", "envelope": "from",
-        "props": { "fillColor": "#FF9A2A" } }
+      {
+        "name": "Slide",
+        "basedOn": "words",
+        "stagger": 0.18,
+        "dur": 0.8,
+        "ease": "outExpo",
+        "envelope": "from",
+        "props": {
+          "position": [
+            260,
+            0
+          ],
+          "opacity": 0,
+          "blur": [
+            24,
+            0
+          ]
+        }
+      },
+      {
+        "name": "Heat",
+        "basedOn": "words",
+        "stagger": 0.18,
+        "dur": 1.0,
+        "ease": "inOutSine",
+        "envelope": "from",
+        "props": {
+          "fillColor": "#FF9A2A"
+        }
+      }
     ]
   },
-  "out": { "mirror": true }
+  "out": {
+    "mirror": true
+  },
+  "order": 4
 }

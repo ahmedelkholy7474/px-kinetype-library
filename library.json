@@ -1,7 +1,7 @@
 {
  "name": "PX-Kinetype Library",
  "schema": 1,
- "updated": "2026-10-29T14:48:19.912Z",
+ "updated": "2026-10-30T17:34:13.224Z",
  "categories": [
   {
    "id": "all",
@@ -47,111 +47,6 @@
   }
  ],
  "presets": [
-  {
-   "id": "color-word-swap",
-   "name": "Color Word Swap",
-   "category": "kinetic",
-   "version": 1,
-   "added": "2026-10-29",
-   "source": "590e72fc_720w.mp4",
-   "requires": "1.6",
-   "seed": 97,
-   "layout": "sequence",
-   "overlap": 0.9,
-   "palette": [
-    [
-     "#E61CFF",
-     "#7A2BFF"
-    ],
-    [
-     "#FFE01A",
-     "#FF7A1A"
-    ],
-    [
-     "#2EE6FF",
-     "#3A7BFF"
-    ],
-    [
-     "#FF4D6D",
-     "#FF9A3C"
-    ],
-    [
-     "#8CFF4A",
-     "#1AE0A0"
-    ]
-   ],
-   "glow": {
-    "size": 22,
-    "intensity": 1.3,
-    "settle": 0.5
-   },
-   "in": {
-    "animators": [
-     {
-      "name": "Reveal",
-      "basedOn": "chars",
-      "stagger": 0.055,
-      "dur": 0.35,
-      "ease": "outCubic",
-      "envelope": "from",
-      "props": {
-       "opacity": 0,
-       "blur": [
-        10,
-        10
-       ]
-      }
-     },
-     {
-      "name": "Tint",
-      "basedOn": "chars",
-      "stagger": 0.055,
-      "dur": 1.1,
-      "ease": "inOutSine",
-      "envelope": "from",
-      "props": {
-       "fillColor": "palette"
-      }
-     },
-     {
-      "name": "Tint Ramp",
-      "basedOn": "chars",
-      "stagger": 0.055,
-      "dur": 1.1,
-      "ease": "inOutSine",
-      "envelope": "from",
-      "mod": {
-       "type": "ramp",
-       "min": 0,
-       "max": 1
-      },
-      "props": {
-       "fillColor": "paletteB"
-      }
-     }
-    ]
-   },
-   "out": {
-    "animators": [
-     {
-      "name": "Vanish",
-      "basedOn": "chars",
-      "order": "backward",
-      "stagger": 0.05,
-      "dur": 0.3,
-      "ease": "outCubic",
-      "envelope": "from",
-      "props": {
-       "opacity": 0,
-       "blur": [
-        8,
-        8
-       ]
-      }
-     }
-    ]
-   }
-  },
   {
    "id": "pixelate-typewriter",
    "name": "Pixelate Typewriter",
@@ -219,7 +114,8 @@
    },
    "out": {
     "mirror": true
-   }
+   },
+   "order": 1
   },
   {
    "id": "advance-typewriter",
@@ -291,7 +187,8 @@
    },
    "out": {
     "mirror": true
-   }
+   },
+   "order": 2
   },
   {
    "id": "glowing",
@@ -344,7 +241,8 @@
      "type": "headStar",
      "color": "#FFA030"
     }
-   ]
+   ],
+   "order": 3
   },
   {
    "id": "right-slide-in",
@@ -395,7 +293,8 @@
    },
    "out": {
     "mirror": true
-   }
+   },
+   "order": 4
   },
   {
    "id": "glowing-bounce",
@@ -452,7 +351,8 @@
    },
    "out": {
     "mirror": true
-   }
+   },
+   "order": 5
   },
   {
    "id": "decode-scramble",
@@ -636,7 +536,8 @@
      "type": "cursor",
      "color": "#FFFFFF"
     }
-   ]
+   ],
+   "order": 6
   },
   {
    "id": "label-pop",
@@ -698,7 +599,8 @@
    },
    "out": {
     "mirror": true
-   }
+   },
+   "order": 7
   },
   {
    "id": "color-kinetic",
@@ -776,7 +678,114 @@
       }
      }
     ]
-   }
+   },
+   "order": 8
+  },
+  {
+   "id": "color-word-swap",
+   "name": "Color Word Swap",
+   "category": "kinetic",
+   "version": 1,
+   "added": "2026-10-29",
+   "source": "590e72fc_720w.mp4",
+   "requires": "1.6",
+   "seed": 97,
+   "layout": "sequence",
+   "overlap": 0.9,
+   "palette": [
+    [
+     "#E61CFF",
+     "#7A2BFF"
+    ],
+    [
+     "#FFE01A",
+     "#FF7A1A"
+    ],
+    [
+     "#2EE6FF",
+     "#3A7BFF"
+    ],
+    [
+     "#FF4D6D",
+     "#FF9A3C"
+    ],
+    [
+     "#8CFF4A",
+     "#1AE0A0"
+    ]
+   ],
+   "glow": {
+    "size": 22,
+    "intensity": 1.3,
+    "settle": 0.5
+   },
+   "in": {
+    "animators": [
+     {
+      "name": "Reveal",
+      "basedOn": "chars",
+      "stagger": 0.055,
+      "dur": 0.35,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        10,
+        10
+       ]
+      }
+     },
+     {
+      "name": "Tint",
+      "basedOn": "chars",
+      "stagger": 0.055,
+      "dur": 1.1,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "fillColor": "palette"
+      }
+     },
+     {
+      "name": "Tint Ramp",
+      "basedOn": "chars",
+      "stagger": 0.055,
+      "dur": 1.1,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "mod": {
+       "type": "ramp",
+       "min": 0,
+       "max": 1
+      },
+      "props": {
+       "fillColor": "paletteB"
+      }
+     }
+    ]
+   },
+   "out": {
+    "animators": [
+     {
+      "name": "Vanish",
+      "basedOn": "chars",
+      "order": "backward",
+      "stagger": 0.05,
+      "dur": 0.3,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        8,
+        8
+       ]
+      }
+     }
+    ]
+   },
+   "order": 9
   }
  ]
 }

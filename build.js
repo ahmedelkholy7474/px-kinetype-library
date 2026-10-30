@@ -22,7 +22,7 @@ var presets = fs.readdirSync(presetDir)
   })
   .sort(function (a, b) {
     function cmp(x, y) { x = x || ""; y = y || ""; return x < y ? -1 : (x > y ? 1 : 0); }
-    return cmp(a.added, b.added) || cmp(a.source, b.source) || cmp(a.id, b.id);
+    return ((a.order || 9999) - (b.order || 9999)) || cmp(a.added, b.added) || cmp(a.id, b.id);
   });
 
 var lib = {

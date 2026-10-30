@@ -9,23 +9,98 @@
   "seed": 97,
   "layout": "sequence",
   "overlap": 0.9,
-  "palette": [["#E61CFF", "#7A2BFF"], ["#FFE01A", "#FF7A1A"], ["#2EE6FF", "#3A7BFF"], ["#FF4D6D", "#FF9A3C"], ["#8CFF4A", "#1AE0A0"]],
-  "glow": { "size": 22, "intensity": 1.3, "settle": 0.5 },
+  "palette": [
+    [
+      "#E61CFF",
+      "#7A2BFF"
+    ],
+    [
+      "#FFE01A",
+      "#FF7A1A"
+    ],
+    [
+      "#2EE6FF",
+      "#3A7BFF"
+    ],
+    [
+      "#FF4D6D",
+      "#FF9A3C"
+    ],
+    [
+      "#8CFF4A",
+      "#1AE0A0"
+    ]
+  ],
+  "glow": {
+    "size": 22,
+    "intensity": 1.3,
+    "settle": 0.5
+  },
   "in": {
     "animators": [
-      { "name": "Reveal", "basedOn": "chars", "stagger": 0.055, "dur": 0.35, "ease": "outCubic", "envelope": "from",
-        "props": { "opacity": 0, "blur": [10, 10] } },
-      { "name": "Tint", "basedOn": "chars", "stagger": 0.055, "dur": 1.1, "ease": "inOutSine", "envelope": "from",
-        "props": { "fillColor": "palette" } },
-      { "name": "Tint Ramp", "basedOn": "chars", "stagger": 0.055, "dur": 1.1, "ease": "inOutSine", "envelope": "from",
-        "mod": { "type": "ramp", "min": 0, "max": 1 },
-        "props": { "fillColor": "paletteB" } }
+      {
+        "name": "Reveal",
+        "basedOn": "chars",
+        "stagger": 0.055,
+        "dur": 0.35,
+        "ease": "outCubic",
+        "envelope": "from",
+        "props": {
+          "opacity": 0,
+          "blur": [
+            10,
+            10
+          ]
+        }
+      },
+      {
+        "name": "Tint",
+        "basedOn": "chars",
+        "stagger": 0.055,
+        "dur": 1.1,
+        "ease": "inOutSine",
+        "envelope": "from",
+        "props": {
+          "fillColor": "palette"
+        }
+      },
+      {
+        "name": "Tint Ramp",
+        "basedOn": "chars",
+        "stagger": 0.055,
+        "dur": 1.1,
+        "ease": "inOutSine",
+        "envelope": "from",
+        "mod": {
+          "type": "ramp",
+          "min": 0,
+          "max": 1
+        },
+        "props": {
+          "fillColor": "paletteB"
+        }
+      }
     ]
   },
   "out": {
     "animators": [
-      { "name": "Vanish", "basedOn": "chars", "order": "backward", "stagger": 0.05, "dur": 0.3, "ease": "outCubic", "envelope": "from",
-        "props": { "opacity": 0, "blur": [8, 8] } }
+      {
+        "name": "Vanish",
+        "basedOn": "chars",
+        "order": "backward",
+        "stagger": 0.05,
+        "dur": 0.3,
+        "ease": "outCubic",
+        "envelope": "from",
+        "props": {
+          "opacity": 0,
+          "blur": [
+            8,
+            8
+          ]
+        }
+      }
     ]
-  }
+  },
+  "order": 9
 }

@@ -18,6 +18,8 @@ library.json        what the panel downloads
 ```jsonc
 {
   "id": "glowing-bounce", "name": "Glowing Bounce", "category": "slide", "version": 1,
+  "order": 5,                                // position in the grid
+  "requires": "1.6",                         // minimum panel version (older panels show UPDATE PLUGIN)
   "seed": 53,                                // randomness seed
   "glow": { "size": 34, "intensity": 1.7, "settle": 0.3 },   // omit = no glow. size in px @100px text
   "layout": "sequence",                      // optional: one line/word at a time (palette per part)
@@ -37,10 +39,16 @@ Animator:
   "ease": "linear|step|inCubic|outQuad|outCubic|outQuart|outExpo|inOutCubic|inOutSine|outBack|outElastic|outBounce",
   "easeAmount": 1.7,                                 // outBack overshoot
   "envelope": "from" | "gate" | "pulse",            // from: start at props -> settle. gate: only while arriving
-  "mod": { "type": "random" | "flicker" | "chance", "min": -1, "max": 1, "rate": 24, "p": 0.2 },
+  "mod": { "type": "random" | "flicker" | "chance" | "ramp" | "expr", "min": -1, "max": 1, "rate": 24, "p": 0.2,
+           "code": "return __i/__n;" },             // expr: raw expression code, sees __i __n __k __p __e __T time
   "glyph": true,                                     // changes letters (skipped for Arabic)
   "charRange": "unicode",
   "props": { "position": [0,-110], "scale": [100,100], "rotation": 0, "skew": 0, "opacity": 0,
-             "blur": [0,0], "fillColor": "#FFC21A" | "palette", "tracking": 0, "charOffset": 0, "charValue": 9608 }
+             "blur": [0,0], "fillColor": "#FFC21A" | "palette" | "paletteB", "tracking": 0, "charOffset": 0, "charValue": 9608 }
 }
 ```
+
+## On the layer (panel 1.7+)
+- Markers **KT In** / **KT Out** on the text layer: drag them to make the in / out animation faster or slower.
+- Fill colours are linked to Color Controls **KT Tint** / **KT Tint 2** (editable in the panel or Effect Controls).
+- Direction: Arabic runs right-to-left, English left-to-right (panel: Auto / L→R / R←L). Sideways motion is mirrored for right-to-left.
