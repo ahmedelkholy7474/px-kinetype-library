@@ -1,0 +1,13 @@
+{
+  "id": "pixel-scan",
+  "name": "Pixel Scan Reveal",
+  "version": 1,
+  "order": 4,
+  "status": "soon",
+  "description": "Glowing pixel squares scan in and reveal a layer.",
+  "icon": "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><rect x=\"3\" y=\"3\" width=\"5\" height=\"5\" rx=\"1\"/><rect x=\"10\" y=\"3\" width=\"5\" height=\"5\" rx=\"1\" opacity=\".6\"/><rect x=\"3\" y=\"10\" width=\"5\" height=\"5\" rx=\"1\" opacity=\".6\"/><rect x=\"10\" y=\"10\" width=\"5\" height=\"5\" rx=\"1\" opacity=\".3\"/><rect x=\"17\" y=\"17\" width=\"4\" height=\"4\" rx=\"1\" opacity=\".3\"/></svg>",
+  "colors": [
+    "#4BFF8A",
+    "#1AE0A0"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "kashida-stretch",
+  "name": "Kashida Stretch",
+  "version": 1,
+  "order": 1,
+  "status": "soon",
+  "description": "Arabic text: the kashida stretches (\u062e\u0648\u0644\u064a \u2190 \u062e\u0640\u0640\u0640\u0640\u0648\u0644\u064a) with a light bounce.",
+  "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M3 14h4M17 14h4M7 14c2 0 2-4 5-4s3 4 5 4\"/></svg>",
+  "colors": [
+    "#E0703A",
+    "#E8A030"
+  ]
+}

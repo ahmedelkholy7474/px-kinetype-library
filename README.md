@@ -1,4 +1,4 @@
-# PX-Kinetype Library
+# Squeezy Text Library
 
 This folder is the online preset library. The panel downloads `library.json` when you press the bag icon (Sync).
 
@@ -48,7 +48,7 @@ Animator:
 }
 ```
 
-## On the layer (panel 1.7+)
+## On the layer (Squeezy 1.7+)
 - Markers **KT In** / **KT Out** on the text layer: drag them to make the in / out animation faster or slower.
 - Fill colours are linked to Color Controls **KT Tint** / **KT Tint 2** (editable in the panel or Effect Controls).
 - Direction: Arabic runs right-to-left, English left-to-right (panel: Auto / L→R / R←L). Sideways motion is mirrored for right-to-left.

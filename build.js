@@ -26,13 +26,18 @@ var presets = fs.readdirSync(presetDir)
   });
 
 var enginePath = path.join(dir, "engine.json");
+var addonDir = path.join(dir, "addons");
+var addons = fs.existsSync(addonDir) ? fs.readdirSync(addonDir).filter(function (f) { return /\.json$/.test(f); })
+  .map(function (f) { return JSON.parse(fs.readFileSync(path.join(addonDir, f), "utf8")); })
+  .sort(function (a, b) { return (a.order || 999) - (b.order || 999); }) : [];
 var lib = {
-  name: "PX-Kinetype Library",
+  name: "Squeezy Text Library",
   schema: 1,
   engine: fs.existsSync(enginePath) ? JSON.parse(fs.readFileSync(enginePath, "utf8")) : undefined,
   updated: new Date().toISOString(),
   categories: categories,
-  presets: presets
+  presets: presets,
+  addons: addons
 };
 
 var json = JSON.stringify(lib, null, 1);

@@ -1,0 +1,13 @@
+{
+  "id": "block-flow",
+  "name": "Block Flow",
+  "version": 1,
+  "order": 3,
+  "status": "soon",
+  "description": "Images side by side, swapping with grid-block glitch transitions.",
+  "icon": "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><rect x=\"3\" y=\"3\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"13\" y=\"3\" width=\"8\" height=\"8\" rx=\"1.5\" opacity=\".55\"/><rect x=\"3\" y=\"13\" width=\"8\" height=\"8\" rx=\"1.5\" opacity=\".55\"/><rect x=\"13\" y=\"13\" width=\"8\" height=\"8\" rx=\"1.5\"/></svg>",
+  "colors": [
+    "#C04CFF",
+    "#E040C8"
+  ]
+}
