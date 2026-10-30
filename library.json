@@ -7,7 +7,7 @@
    "keepGlyph": false
   }
  },
- "updated": "2026-10-30T18:58:21.724Z",
+ "updated": "2026-10-30T19:03:07.753Z",
  "categories": [
   {
    "id": "all",
@@ -1058,6 +1058,97 @@
         125
        ],
        "tracking": 110
+      }
+     }
+    ]
+   },
+   "out": {
+    "animators": [
+     {
+      "name": "Shrink",
+      "basedOn": "lines",
+      "dur": 0.7,
+      "ease": "inOutCubic",
+      "envelope": "from",
+      "props": {
+       "scale": [
+        55,
+        55
+       ],
+       "tracking": -180
+      }
+     },
+     {
+      "name": "Fade",
+      "basedOn": "lines",
+      "dur": 0.7,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        100,
+        100
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "camera-fly-in",
+   "name": "Camera Fly In",
+   "category": "3d",
+   "version": 1,
+   "order": 13,
+   "added": "2026-10-30",
+   "source": "Comp_1_2.mp4 (behind the camera)",
+   "requires": "2.0",
+   "seed": 127,
+   "perChar3D": true,
+   "in": {
+    "animators": [
+     {
+      "name": "Fly",
+      "basedOn": "words",
+      "start": 0.05,
+      "stagger": 0.22,
+      "dur": 1.15,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        60,
+        -3400
+       ]
+      }
+     },
+     {
+      "name": "Focus",
+      "basedOn": "words",
+      "start": 0.05,
+      "stagger": 0.22,
+      "dur": 0.9,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "blur": [
+        28,
+        28
+       ]
+      }
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "start": 0.05,
+      "stagger": 0.22,
+      "dur": 0.45,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "opacity": 0
       }
      }
     ]
