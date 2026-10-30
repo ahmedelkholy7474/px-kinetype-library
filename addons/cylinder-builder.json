@@ -1,13 +1,65 @@
 {
   "id": "cylinder-builder",
   "name": "Cylinder Builder",
-  "version": 1,
+  "version": 2,
   "order": 2,
-  "status": "soon",
-  "description": "Any number of layers on a rotating 3D cylinder, back layers blurred and faded.",
+  "status": "ready",
+  "description": "Select 2+ layers: they go on a rotating 3D cylinder, back layers blurred and faded. Radius, spin and blur live on a control null.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><ellipse cx=\"12\" cy=\"6\" rx=\"7\" ry=\"2.5\"/><path d=\"M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6\"/></svg>",
   "colors": [
     "#3A7BFF",
     "#2EE6FF"
-  ]
+  ],
+  "include": [
+    "_common.jsx"
+  ],
+  "scriptFile": "cylinder.jsx",
+  "runLabel": "Build Cylinder",
+  "params": [
+    {
+      "id": "radius",
+      "label": "Radius (0 = auto)",
+      "type": "slider",
+      "min": 0,
+      "max": 3000,
+      "value": 0,
+      "unit": "px"
+    },
+    {
+      "id": "spin",
+      "label": "Spin",
+      "type": "slider",
+      "min": -120,
+      "max": 120,
+      "value": 20,
+      "unit": "°/s"
+    },
+    {
+      "id": "blur",
+      "label": "Back blur",
+      "type": "slider",
+      "min": 0,
+      "max": 80,
+      "value": 20
+    },
+    {
+      "id": "minOpacity",
+      "label": "Back opacity",
+      "type": "slider",
+      "min": 0,
+      "max": 100,
+      "value": 35,
+      "unit": "%"
+    },
+    {
+      "id": "tilt",
+      "label": "Tilt",
+      "type": "slider",
+      "min": -30,
+      "max": 30,
+      "value": 0,
+      "unit": "°"
+    }
+  ],
+  "requires": "2.0"
 }

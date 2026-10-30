@@ -7,7 +7,7 @@
    "keepGlyph": false
   }
  },
- "updated": "2026-10-30T19:33:03.176Z",
+ "updated": "2026-10-30T19:40:48.800Z",
  "categories": [
   {
    "id": "all",
@@ -1191,54 +1191,288 @@
   {
    "id": "kashida-stretch",
    "name": "Kashida Stretch",
-   "version": 1,
+   "version": 2,
    "order": 1,
-   "status": "soon",
-   "description": "Arabic text: the kashida stretches (خولي ← خــــولي) with a light bounce.",
+   "status": "ready",
+   "description": "Arabic text: the kashida stretches out (خولي ← خــــولي) with a light bounce, and can fold back at the end.",
    "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M3 14h4M17 14h4M7 14c2 0 2-4 5-4s3 4 5 4\"/></svg>",
    "colors": [
     "#E0703A",
     "#E8A030"
-   ]
+   ],
+   "runLabel": "Stretch",
+   "params": [
+    {
+     "id": "position",
+     "label": "Where",
+     "type": "select",
+     "options": [
+      "Middle of each word",
+      "After first letter",
+      "Longest word only",
+      "Every connection"
+     ],
+     "value": "Middle of each word"
+    },
+    {
+     "id": "amount",
+     "label": "Kashida length",
+     "type": "slider",
+     "min": 1,
+     "max": 20,
+     "value": 6
+    },
+    {
+     "id": "duration",
+     "label": "Duration",
+     "type": "slider",
+     "min": 0.1,
+     "max": 3,
+     "step": 0.05,
+     "value": 0.6,
+     "unit": "s"
+    },
+    {
+     "id": "bounce",
+     "label": "Bounce",
+     "type": "slider",
+     "min": 0,
+     "max": 100,
+     "value": 40,
+     "unit": "%"
+    },
+    {
+     "id": "delay",
+     "label": "Delay",
+     "type": "slider",
+     "min": 0,
+     "max": 5,
+     "step": 0.1,
+     "value": 0,
+     "unit": "s"
+    },
+    {
+     "id": "collapse",
+     "label": "Fold back at end",
+     "type": "checkbox",
+     "value": true
+    }
+   ],
+   "requires": "2.0",
+   "script": "// ---- Squeezy add-on helpers (ExtendScript, ES3) ----\nfunction sqFx(l) { return l.property(\"ADBE Effect Parade\"); }\nfunction sqCtrl(l, match, name, v) {\n    var p = sqFx(l).property(name);\n    if (p && p.matchName !== match) { p.remove(); p = null; }\n    if (!p) { p = sqFx(l).addProperty(match); p.name = name; p = sqFx(l).property(name); }\n    try { if (v !== undefined && v !== null) p.property(1).setValue(v); } catch (e) {}\n    return sqFx(l).property(name);\n}\nfunction sqSlider(l, name, v) { return sqCtrl(l, \"ADBE Slider Control\", name, v); }\nfunction sqCheckbox(l, name, v) { return sqCtrl(l, \"ADBE Checkbox Control\", name, v ? 1 : 0); }\nfunction sqHex(h) { var n = parseInt(String(h).replace(\"#\", \"\"), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1]; }\nfunction sqRemoveFx(l, prefix) {\n    var fx = sqFx(l); if (!fx) return;\n    for (var i = fx.numProperties; i >= 1; i--) if (String(fx.property(i).name).indexOf(prefix) === 0) fx.property(i).remove();\n}\nfunction sqRemoveKids(comp, l, prefix) {\n    for (var i = comp.numLayers; i >= 1; i--) {\n        var c = comp.layer(i);\n        if (c.parent && c.parent.index === l.index && String(c.name).indexOf(prefix) === 0) c.remove();\n    }\n}\nfunction sqEaseKeys(prop) {\n    for (var k = 1; k <= prop.numKeys; k++) {\n        var dims = 1; try { var v = prop.keyValue(k); if (v instanceof Array) dims = v.length; } catch (e) {}\n        if (prop.propertyValueType === PropertyValueType.TwoD_SPATIAL || prop.propertyValueType === PropertyValueType.ThreeD_SPATIAL) dims = 1;\n        var a = [], b = [];\n        for (var d = 0; d < dims; d++) { a.push(new KeyframeEase(0, 45)); b.push(new KeyframeEase(0, 45)); }\n        try { prop.setTemporalEaseAtKey(k, a, b); } catch (e2) {}\n    }\n}\n\n// ---- pixel grid reveal (used by Pixel Scan Reveal and Block Flow) ----\n// Builds a block matte + optional glowing block layer, both parented to the target layer.\nfunction sqScan(comp, l, o) {\n    var r = l.sourceRectAtTime(o.t0, false);\n    if (!r || r.width < 1 || r.height < 1) throw new Error(l.name + \" has nothing visible at the current time\");\n    var size = Math.max(4, o.size), cols, rows;\n    do { cols = Math.ceil(r.width / size); rows = Math.ceil(r.height / size); if (cols * rows > 700) size *= 1.15; } while (cols * rows > 700);\n\n    sqRemoveKids(comp, l, \"SQ Scan \");\n    sqRemoveFx(l, \"SQ Scan \");\n    sqSlider(l, \"SQ Scan Progress\", 0);\n    sqSlider(l, \"SQ Scan Random\", o.random);\n    sqSlider(l, \"SQ Scan Glow Band\", o.band);\n    var pr = sqFx(l).property(\"SQ Scan Progress\").property(1);\n    pr.setValueAtTime(o.t0, 0);\n    pr.setValueAtTime(o.t0 + o.dur, 100);\n    sqEaseKeys(pr);\n\n    var cells = [];\n    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {\n        var cx = r.left + (x + 0.5) * size, cy = r.top + (y + 0.5) * size, u;\n        var nx = cols > 1 ? x / (cols - 1) : 0, ny = rows > 1 ? y / (rows - 1) : 0;\n        switch (o.dir) {\n            case \"rtl\": u = 1 - nx; break;\n            case \"ttb\": u = ny; break;\n            case \"btt\": u = 1 - ny; break;\n            case \"center\": u = Math.min(1, Math.sqrt((nx - 0.5) * (nx - 0.5) + (ny - 0.5) * (ny - 0.5)) / 0.7072); break;\n            case \"random\": u = Math.random(); break;\n            default: u = nx;\n        }\n        cells.push({ x: cx, y: cy, u: u, q: Math.random() });\n    }\n\n    function grid(name, glow) {\n        var s = comp.layers.addShape();\n        s.name = name;\n        s.moveBefore(l);\n        s.parent = l;\n        try { s.property(\"ADBE Transform Group\").property(\"ADBE Anchor Point\").setValue([0, 0]); } catch (e) {}\n        try { s.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([0, 0]); } catch (e1) { try { s.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([0, 0, 0]); } catch (e2) {} }\n        var root = function () { return s.property(\"ADBE Root Vectors Group\"); };\n        var bs = glow ? size * 0.78 : size + 1;\n        var col = glow ? sqHex(o.color) : [1, 1, 1, 1];\n        for (var i = 0; i < cells.length; i++) {\n            var c = cells[i], k = (c.u * 1).toFixed(4), qq = c.q.toFixed(4);\n            var gi = root().addProperty(\"ADBE Vector Group\").propertyIndex;\n            var G = function () { return root().property(gi); };\n            G().property(\"ADBE Vectors Group\").addProperty(\"ADBE Vector Shape - Rect\");\n            G().property(\"ADBE Vectors Group\").property(1).property(\"ADBE Vector Rect Size\").setValue([bs, bs]);\n            G().property(\"ADBE Vectors Group\").addProperty(\"ADBE Vector Graphic - Fill\");\n            G().property(\"ADBE Vectors Group\").property(2).property(\"ADBE Vector Fill Color\").setValue(col);\n            var T = G().property(\"ADBE Vector Transform Group\");\n            T.property(\"ADBE Vector Position\").setValue([c.x, c.y]);\n            var head = \"var P=parent.effect(\\\"SQ Scan Progress\\\")(1)/100, R=parent.effect(\\\"SQ Scan Random\\\")(1)/100; var k=\" + k + \"*(1-R)+\" + qq + \"*R*0.999;\";\n            G().property(\"ADBE Vector Transform Group\").property(\"ADBE Vector Group Opacity\").expression = glow\n                ? head + \" var B=Math.max(parent.effect(\\\"SQ Scan Glow Band\\\")(1)/100,0.001), d=P-k*(1-B)-B*0.5; (P>0 && P<1 && d>=-B*0.5 && d<B*0.5) ? 100*(1-Math.abs(d)/(B*0.5)) : 0;\"\n                : head + \" (P>=1 || (P>0 && P>=k)) ? 100 : 0;\";\n        }\n        return s;\n    }\n\n    var m = grid(\"SQ Scan Matte · \" + l.name, false);\n    if (o.glow) {\n        var g = grid(\"SQ Scan Glow · \" + l.name, true);\n        g.blendingMode = BlendingMode.ADD;\n        var gl = sqFx(g).addProperty(\"ADBE Glo2\");\n        try { gl.property(3).setValue(Math.max(10, size * 0.8)); gl.property(4).setValue(1.6); } catch (eg) {}\n    }\n    var done = false;\n    try { if (l.setTrackMatte) { l.setTrackMatte(m, TrackMatteType.ALPHA); done = true; } } catch (et) {}\n    if (!done) { m.moveBefore(l); l.trackMatteType = TrackMatteType.ALPHA; }\n    m.enabled = false;\n    return cells.length;\n}\n\nif (!comp) return \"Open a composition first.\";\nvar MODES = { \"Middle of each word\": 0, \"After first letter\": 1, \"Longest word only\": 2, \"Every connection\": 3 };\nvar mode = MODES[params.position]; if (mode === undefined) mode = 0;\nvar n = 0, skipped = 0;\nvar expr = [\n \"var N=effect(\\\"SQ Kashida Amount\\\")(1), D=Math.max(effect(\\\"SQ Kashida Duration\\\")(1),0.01), B=effect(\\\"SQ Kashida Bounce\\\")(1)/100;\",\n \"var t=time-inPoint-effect(\\\"SQ Kashida Delay\\\")(1), p=Math.min(Math.max(t/D,0),1);\",\n \"var c1=2.6*B, c3=c1+1, e=(p<=0)?0:((p>=1)?1:1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2));\",\n \"if (effect(\\\"SQ Kashida Collapse\\\")(1)==1){ var po=Math.min(Math.max((outPoint-time)/D,0),1); e=Math.min(e, 1-Math.pow(1-po,3)); }\",\n \"var K=Math.max(0,Math.round(N*e)), s=''+value, MODE=\" + mode + \";\",\n \"function ar(c){ var x=c.charCodeAt(0); return (x>=0x0620&&x<=0x064A)||(x>=0x066E&&x<=0x06D3); }\",\n \"function joins(c){ return ar(c) && 'اأإآٱدذرزوؤةءژ'.indexOf(c)<0; }\",\n \"var spots=[], words=[], st=-1;\",\n \"for (var i=0;i<=s.length;i++){ var ch=i<s.length?s.charAt(i):' '; if(ar(ch)||ch=='\\\\u0640'){ if(st<0) st=i; } else if(st>=0){ words.push([st,i]); st=-1; } }\",\n \"function cand(w){ var r=[]; for(var j=w[0];j<w[1]-1;j++){ if(joins(s.charAt(j)) && ar(s.charAt(j+1))) r.push(j+1); } return r; }\",\n \"if (MODE==2){ var best=null; for (var w=0;w<words.length;w++) if(!best||words[w][1]-words[w][0]>best[1]-best[0]) best=words[w]; if(best) words=[best]; }\",\n \"for (var w2=0; w2<words.length; w2++){ var c=cand(words[w2]); if(!c.length) continue;\",\n \"  if (MODE==3) spots=spots.concat(c); else if (MODE==1) spots.push(c[0]); else spots.push(c[Math.floor((c.length-1)/2)]); }\",\n \"var out='', last=0, run=''; for (var q=0;q<K;q++) run+='\\\\u0640';\",\n \"spots.sort(function(a,b){return a-b;}); for (var z=0; z<spots.length; z++){ out+=s.substring(last,spots[z])+run; last=spots[z]; }\",\n \"out+=s.substring(last); out;\"\n].join(\"\\n\");\nfor (var i = 0; i < layers.length; i++) {\n    var l = layers[i];\n    if (!l.property(\"ADBE Text Properties\")) { skipped++; continue; }\n    var txt = String(l.property(\"ADBE Text Properties\").property(\"ADBE Text Document\").value.text);\n    if (!/[ؠ-ي]/.test(txt)) { skipped++; continue; }\n    sqSlider(l, \"SQ Kashida Amount\", params.amount);\n    sqSlider(l, \"SQ Kashida Duration\", params.duration);\n    sqSlider(l, \"SQ Kashida Bounce\", params.bounce);\n    sqSlider(l, \"SQ Kashida Delay\", params.delay);\n    sqCheckbox(l, \"SQ Kashida Collapse\", params.collapse);\n    l.property(\"ADBE Text Properties\").property(\"ADBE Text Document\").expression = expr;\n    n++;\n}\nif (!n) return \"Select an Arabic text layer.\";\nreturn \"Kashida Stretch on \" + n + \" layer\" + (n > 1 ? \"s\" : \"\") + (skipped ? \" (\" + skipped + \" skipped, not Arabic text)\" : \"\");\n"
   },
   {
    "id": "cylinder-builder",
    "name": "Cylinder Builder",
-   "version": 1,
+   "version": 2,
    "order": 2,
-   "status": "soon",
-   "description": "Any number of layers on a rotating 3D cylinder, back layers blurred and faded.",
+   "status": "ready",
+   "description": "Select 2+ layers: they go on a rotating 3D cylinder, back layers blurred and faded. Radius, spin and blur live on a control null.",
    "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><ellipse cx=\"12\" cy=\"6\" rx=\"7\" ry=\"2.5\"/><path d=\"M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6\"/></svg>",
    "colors": [
     "#3A7BFF",
     "#2EE6FF"
-   ]
+   ],
+   "runLabel": "Build Cylinder",
+   "params": [
+    {
+     "id": "radius",
+     "label": "Radius (0 = auto)",
+     "type": "slider",
+     "min": 0,
+     "max": 3000,
+     "value": 0,
+     "unit": "px"
+    },
+    {
+     "id": "spin",
+     "label": "Spin",
+     "type": "slider",
+     "min": -120,
+     "max": 120,
+     "value": 20,
+     "unit": "°/s"
+    },
+    {
+     "id": "blur",
+     "label": "Back blur",
+     "type": "slider",
+     "min": 0,
+     "max": 80,
+     "value": 20
+    },
+    {
+     "id": "minOpacity",
+     "label": "Back opacity",
+     "type": "slider",
+     "min": 0,
+     "max": 100,
+     "value": 35,
+     "unit": "%"
+    },
+    {
+     "id": "tilt",
+     "label": "Tilt",
+     "type": "slider",
+     "min": -30,
+     "max": 30,
+     "value": 0,
+     "unit": "°"
+    }
+   ],
+   "requires": "2.0",
+   "script": "// ---- Squeezy add-on helpers (ExtendScript, ES3) ----\nfunction sqFx(l) { return l.property(\"ADBE Effect Parade\"); }\nfunction sqCtrl(l, match, name, v) {\n    var p = sqFx(l).property(name);\n    if (p && p.matchName !== match) { p.remove(); p = null; }\n    if (!p) { p = sqFx(l).addProperty(match); p.name = name; p = sqFx(l).property(name); }\n    try { if (v !== undefined && v !== null) p.property(1).setValue(v); } catch (e) {}\n    return sqFx(l).property(name);\n}\nfunction sqSlider(l, name, v) { return sqCtrl(l, \"ADBE Slider Control\", name, v); }\nfunction sqCheckbox(l, name, v) { return sqCtrl(l, \"ADBE Checkbox Control\", name, v ? 1 : 0); }\nfunction sqHex(h) { var n = parseInt(String(h).replace(\"#\", \"\"), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1]; }\nfunction sqRemoveFx(l, prefix) {\n    var fx = sqFx(l); if (!fx) return;\n    for (var i = fx.numProperties; i >= 1; i--) if (String(fx.property(i).name).indexOf(prefix) === 0) fx.property(i).remove();\n}\nfunction sqRemoveKids(comp, l, prefix) {\n    for (var i = comp.numLayers; i >= 1; i--) {\n        var c = comp.layer(i);\n        if (c.parent && c.parent.index === l.index && String(c.name).indexOf(prefix) === 0) c.remove();\n    }\n}\nfunction sqEaseKeys(prop) {\n    for (var k = 1; k <= prop.numKeys; k++) {\n        var dims = 1; try { var v = prop.keyValue(k); if (v instanceof Array) dims = v.length; } catch (e) {}\n        if (prop.propertyValueType === PropertyValueType.TwoD_SPATIAL || prop.propertyValueType === PropertyValueType.ThreeD_SPATIAL) dims = 1;\n        var a = [], b = [];\n        for (var d = 0; d < dims; d++) { a.push(new KeyframeEase(0, 45)); b.push(new KeyframeEase(0, 45)); }\n        try { prop.setTemporalEaseAtKey(k, a, b); } catch (e2) {}\n    }\n}\n\n// ---- pixel grid reveal (used by Pixel Scan Reveal and Block Flow) ----\n// Builds a block matte + optional glowing block layer, both parented to the target layer.\nfunction sqScan(comp, l, o) {\n    var r = l.sourceRectAtTime(o.t0, false);\n    if (!r || r.width < 1 || r.height < 1) throw new Error(l.name + \" has nothing visible at the current time\");\n    var size = Math.max(4, o.size), cols, rows;\n    do { cols = Math.ceil(r.width / size); rows = Math.ceil(r.height / size); if (cols * rows > 700) size *= 1.15; } while (cols * rows > 700);\n\n    sqRemoveKids(comp, l, \"SQ Scan \");\n    sqRemoveFx(l, \"SQ Scan \");\n    sqSlider(l, \"SQ Scan Progress\", 0);\n    sqSlider(l, \"SQ Scan Random\", o.random);\n    sqSlider(l, \"SQ Scan Glow Band\", o.band);\n    var pr = sqFx(l).property(\"SQ Scan Progress\").property(1);\n    pr.setValueAtTime(o.t0, 0);\n    pr.setValueAtTime(o.t0 + o.dur, 100);\n    sqEaseKeys(pr);\n\n    var cells = [];\n    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {\n        var cx = r.left + (x + 0.5) * size, cy = r.top + (y + 0.5) * size, u;\n        var nx = cols > 1 ? x / (cols - 1) : 0, ny = rows > 1 ? y / (rows - 1) : 0;\n        switch (o.dir) {\n            case \"rtl\": u = 1 - nx; break;\n            case \"ttb\": u = ny; break;\n            case \"btt\": u = 1 - ny; break;\n            case \"center\": u = Math.min(1, Math.sqrt((nx - 0.5) * (nx - 0.5) + (ny - 0.5) * (ny - 0.5)) / 0.7072); break;\n            case \"random\": u = Math.random(); break;\n            default: u = nx;\n        }\n        cells.push({ x: cx, y: cy, u: u, q: Math.random() });\n    }\n\n    function grid(name, glow) {\n        var s = comp.layers.addShape();\n        s.name = name;\n        s.moveBefore(l);\n        s.parent = l;\n        try { s.property(\"ADBE Transform Group\").property(\"ADBE Anchor Point\").setValue([0, 0]); } catch (e) {}\n        try { s.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([0, 0]); } catch (e1) { try { s.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([0, 0, 0]); } catch (e2) {} }\n        var root = function () { return s.property(\"ADBE Root Vectors Group\"); };\n        var bs = glow ? size * 0.78 : size + 1;\n        var col = glow ? sqHex(o.color) : [1, 1, 1, 1];\n        for (var i = 0; i < cells.length; i++) {\n            var c = cells[i], k = (c.u * 1).toFixed(4), qq = c.q.toFixed(4);\n            var gi = root().addProperty(\"ADBE Vector Group\").propertyIndex;\n            var G = function () { return root().property(gi); };\n            G().property(\"ADBE Vectors Group\").addProperty(\"ADBE Vector Shape - Rect\");\n            G().property(\"ADBE Vectors Group\").property(1).property(\"ADBE Vector Rect Size\").setValue([bs, bs]);\n            G().property(\"ADBE Vectors Group\").addProperty(\"ADBE Vector Graphic - Fill\");\n            G().property(\"ADBE Vectors Group\").property(2).property(\"ADBE Vector Fill Color\").setValue(col);\n            var T = G().property(\"ADBE Vector Transform Group\");\n            T.property(\"ADBE Vector Position\").setValue([c.x, c.y]);\n            var head = \"var P=parent.effect(\\\"SQ Scan Progress\\\")(1)/100, R=parent.effect(\\\"SQ Scan Random\\\")(1)/100; var k=\" + k + \"*(1-R)+\" + qq + \"*R*0.999;\";\n            G().property(\"ADBE Vector Transform Group\").property(\"ADBE Vector Group Opacity\").expression = glow\n                ? head + \" var B=Math.max(parent.effect(\\\"SQ Scan Glow Band\\\")(1)/100,0.001), d=P-k*(1-B)-B*0.5; (P>0 && P<1 && d>=-B*0.5 && d<B*0.5) ? 100*(1-Math.abs(d)/(B*0.5)) : 0;\"\n                : head + \" (P>=1 || (P>0 && P>=k)) ? 100 : 0;\";\n        }\n        return s;\n    }\n\n    var m = grid(\"SQ Scan Matte · \" + l.name, false);\n    if (o.glow) {\n        var g = grid(\"SQ Scan Glow · \" + l.name, true);\n        g.blendingMode = BlendingMode.ADD;\n        var gl = sqFx(g).addProperty(\"ADBE Glo2\");\n        try { gl.property(3).setValue(Math.max(10, size * 0.8)); gl.property(4).setValue(1.6); } catch (eg) {}\n    }\n    var done = false;\n    try { if (l.setTrackMatte) { l.setTrackMatte(m, TrackMatteType.ALPHA); done = true; } } catch (et) {}\n    if (!done) { m.moveBefore(l); l.trackMatteType = TrackMatteType.ALPHA; }\n    m.enabled = false;\n    return cells.length;\n}\n\nif (!comp) return \"Open a composition first.\";\nvar ls = [];\nfor (var i = 0; i < layers.length; i++) if (layers[i].property(\"ADBE Effect Parade\") && !(layers[i] instanceof CameraLayer) && !(layers[i] instanceof LightLayer)) ls.push(layers[i]);\nif (ls.length < 2) return \"Select 2 or more layers for the cylinder.\";\nvar n = ls.length, wsum = 0;\nfor (var a = 0; a < n; a++) {\n    var r = ls[a].sourceRectAtTime(comp.time, false), sc = ls[a].property(\"ADBE Transform Group\").property(\"ADBE Scale\").value;\n    wsum += r.width * sc[0] / 100;\n}\nvar R = params.radius > 0 ? params.radius : Math.max(250, (wsum / n) * n * 1.15 / (2 * Math.PI));\nvar k = 1, nm;\ndo { nm = \"SQ Cylinder \" + k; k++; } while ((function () { for (var q = 1; q <= comp.numLayers; q++) if (comp.layer(q).name === nm) return true; return false; })());\nvar c = comp.layers.addNull();\nc.name = nm; c.threeDLayer = true; c.label = 10;\nc.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([comp.width / 2, comp.height / 2, R]);\nc.property(\"ADBE Transform Group\").property(\"ADBE Rotate X\").setValue(params.tilt);\nsqSlider(c, \"SQ Cyl Radius\", R);\nsqSlider(c, \"SQ Cyl Angle\", 0);\nsqSlider(c, \"SQ Cyl Spin\", params.spin);\nsqSlider(c, \"SQ Cyl Blur\", params.blur);\nsqSlider(c, \"SQ Cyl Min Opacity\", params.minOpacity);\nvar head = \"var C=parent, R=C.effect(\\\"SQ Cyl Radius\\\")(1); var a=(C.effect(\\\"SQ Cyl Angle\\\")(1)+time*C.effect(\\\"SQ Cyl Spin\\\")(1)+\";\nfor (var j = 0; j < n; j++) {\n    var l = ls[j], off = (j * 360 / n).toFixed(4);\n    l.threeDLayer = true;\n    l.parent = c;\n    var T = l.property(\"ADBE Transform Group\");\n    var ang = head + off + \")*Math.PI/180;\";\n    T.property(\"ADBE Position\").expression = ang + \" [Math.sin(a)*R, 0, -Math.cos(a)*R];\";\n    T.property(\"ADBE Orientation\").expression = ang + \" lookAt([Math.sin(a)*R, 0, -Math.cos(a)*R], [0, 0, 0]);\";\n    T.property(\"ADBE Opacity\").expression = ang + \" var f=(1-Math.cos(a))/2; 100 - f*(100-C.effect(\\\"SQ Cyl Min Opacity\\\")(1));\";\n    sqRemoveFx(l, \"SQ Cyl \");\n    var b = sqFx(l).addProperty(\"ADBE Gaussian Blur 2\");\n    b.name = \"SQ Cyl Depth Blur\";\n    sqFx(l).property(\"SQ Cyl Depth Blur\").property(1).expression = ang + \" var f=(1-Math.cos(a))/2; f*C.effect(\\\"SQ Cyl Blur\\\")(1);\";\n    try { sqFx(l).property(\"SQ Cyl Depth Blur\").property(3).setValue(1); } catch (e) {}\n}\nreturn \"Cylinder with \" + n + \" layers. Spin, radius and blur live on \\\"\" + nm + \"\\\"\";\n"
   },
   {
    "id": "block-flow",
    "name": "Block Flow",
-   "version": 1,
+   "version": 2,
    "order": 3,
-   "status": "soon",
-   "description": "Images side by side, swapping with grid-block glitch transitions.",
+   "status": "ready",
+   "description": "Select images in order: each one takes over the last with a block-glitch transition while the previous card steps down in scale.",
    "icon": "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><rect x=\"3\" y=\"3\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"13\" y=\"3\" width=\"8\" height=\"8\" rx=\"1.5\" opacity=\".55\"/><rect x=\"3\" y=\"13\" width=\"8\" height=\"8\" rx=\"1.5\" opacity=\".55\"/><rect x=\"13\" y=\"13\" width=\"8\" height=\"8\" rx=\"1.5\"/></svg>",
    "colors": [
     "#C04CFF",
     "#E040C8"
-   ]
+   ],
+   "runLabel": "Build Flow",
+   "params": [
+    {
+     "id": "hold",
+     "label": "Hold",
+     "type": "slider",
+     "min": 0.3,
+     "max": 5,
+     "step": 0.1,
+     "value": 1.5,
+     "unit": "s"
+    },
+    {
+     "id": "transition",
+     "label": "Transition",
+     "type": "slider",
+     "min": 0.2,
+     "max": 3,
+     "step": 0.1,
+     "value": 0.8,
+     "unit": "s"
+    },
+    {
+     "id": "size",
+     "label": "Block size",
+     "type": "slider",
+     "min": 10,
+     "max": 200,
+     "value": 60,
+     "unit": "px"
+    },
+    {
+     "id": "step",
+     "label": "Scale down",
+     "type": "slider",
+     "min": 0,
+     "max": 40,
+     "value": 10,
+     "unit": "%"
+    },
+    {
+     "id": "glow",
+     "label": "Glitch squares",
+     "type": "checkbox",
+     "value": true
+    }
+   ],
+   "requires": "2.0",
+   "script": "// ---- Squeezy add-on helpers (ExtendScript, ES3) ----\nfunction sqFx(l) { return l.property(\"ADBE Effect Parade\"); }\nfunction sqCtrl(l, match, name, v) {\n    var p = sqFx(l).property(name);\n    if (p && p.matchName !== match) { p.remove(); p = null; }\n    if (!p) { p = sqFx(l).addProperty(match); p.name = name; p = sqFx(l).property(name); }\n    try { if (v !== undefined && v !== null) p.property(1).setValue(v); } catch (e) {}\n    return sqFx(l).property(name);\n}\nfunction sqSlider(l, name, v) { return sqCtrl(l, \"ADBE Slider Control\", name, v); }\nfunction sqCheckbox(l, name, v) { return sqCtrl(l, \"ADBE Checkbox Control\", name, v ? 1 : 0); }\nfunction sqHex(h) { var n = parseInt(String(h).replace(\"#\", \"\"), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1]; }\nfunction sqRemoveFx(l, prefix) {\n    var fx = sqFx(l); if (!fx) return;\n    for (var i = fx.numProperties; i >= 1; i--) if (String(fx.property(i).name).indexOf(prefix) === 0) fx.property(i).remove();\n}\nfunction sqRemoveKids(comp, l, prefix) {\n    for (var i = comp.numLayers; i >= 1; i--) {\n        var c = comp.layer(i);\n        if (c.parent && c.parent.index === l.index && String(c.name).indexOf(prefix) === 0) c.remove();\n    }\n}\nfunction sqEaseKeys(prop) {\n    for (var k = 1; k <= prop.numKeys; k++) {\n        var dims = 1; try { var v = prop.keyValue(k); if (v instanceof Array) dims = v.length; } catch (e) {}\n        if (prop.propertyValueType === PropertyValueType.TwoD_SPATIAL || prop.propertyValueType === PropertyValueType.ThreeD_SPATIAL) dims = 1;\n        var a = [], b = [];\n        for (var d = 0; d < dims; d++) { a.push(new KeyframeEase(0, 45)); b.push(new KeyframeEase(0, 45)); }\n        try { prop.setTemporalEaseAtKey(k, a, b); } catch (e2) {}\n    }\n}\n\n// ---- pixel grid reveal (used by Pixel Scan Reveal and Block Flow) ----\n// Builds a block matte + optional glowing block layer, both parented to the target layer.\nfunction sqScan(comp, l, o) {\n    var r = l.sourceRectAtTime(o.t0, false);\n    if (!r || r.width < 1 || r.height < 1) throw new Error(l.name + \" has nothing visible at the current time\");\n    var size = Math.max(4, o.size), cols, rows;\n    do { cols = Math.ceil(r.width / size); rows = Math.ceil(r.height / size); if (cols * rows > 700) size *= 1.15; } while (cols * rows > 700);\n\n    sqRemoveKids(comp, l, \"SQ Scan \");\n    sqRemoveFx(l, \"SQ Scan \");\n    sqSlider(l, \"SQ Scan Progress\", 0);\n    sqSlider(l, \"SQ Scan Random\", o.random);\n    sqSlider(l, \"SQ Scan Glow Band\", o.band);\n    var pr = sqFx(l).property(\"SQ Scan Progress\").property(1);\n    pr.setValueAtTime(o.t0, 0);\n    pr.setValueAtTime(o.t0 + o.dur, 100);\n    sqEaseKeys(pr);\n\n    var cells = [];\n    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {\n        var cx = r.left + (x + 0.5) * size, cy = r.top + (y + 0.5) * size, u;\n        var nx = cols > 1 ? x / (cols - 1) : 0, ny = rows > 1 ? y / (rows - 1) : 0;\n        switch (o.dir) {\n            case \"rtl\": u = 1 - nx; break;\n            case \"ttb\": u = ny; break;\n            case \"btt\": u = 1 - ny; break;\n            case \"center\": u = Math.min(1, Math.sqrt((nx - 0.5) * (nx - 0.5) + (ny - 0.5) * (ny - 0.5)) / 0.7072); break;\n            case \"random\": u = Math.random(); break;\n            default: u = nx;\n        }\n        cells.push({ x: cx, y: cy, u: u, q: Math.random() });\n    }\n\n    function grid(name, glow) {\n        var s = comp.layers.addShape();\n        s.name = name;\n        s.moveBefore(l);\n        s.parent = l;\n        try { s.property(\"ADBE Transform Group\").property(\"ADBE Anchor Point\").setValue([0, 0]); } catch (e) {}\n        try { s.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([0, 0]); } catch (e1) { try { s.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([0, 0, 0]); } catch (e2) {} }\n        var root = function () { return s.property(\"ADBE Root Vectors Group\"); };\n        var bs = glow ? size * 0.78 : size + 1;\n        var col = glow ? sqHex(o.color) : [1, 1, 1, 1];\n        for (var i = 0; i < cells.length; i++) {\n            var c = cells[i], k = (c.u * 1).toFixed(4), qq = c.q.toFixed(4);\n            var gi = root().addProperty(\"ADBE Vector Group\").propertyIndex;\n            var G = function () { return root().property(gi); };\n            G().property(\"ADBE Vectors Group\").addProperty(\"ADBE Vector Shape - Rect\");\n            G().property(\"ADBE Vectors Group\").property(1).property(\"ADBE Vector Rect Size\").setValue([bs, bs]);\n            G().property(\"ADBE Vectors Group\").addProperty(\"ADBE Vector Graphic - Fill\");\n            G().property(\"ADBE Vectors Group\").property(2).property(\"ADBE Vector Fill Color\").setValue(col);\n            var T = G().property(\"ADBE Vector Transform Group\");\n            T.property(\"ADBE Vector Position\").setValue([c.x, c.y]);\n            var head = \"var P=parent.effect(\\\"SQ Scan Progress\\\")(1)/100, R=parent.effect(\\\"SQ Scan Random\\\")(1)/100; var k=\" + k + \"*(1-R)+\" + qq + \"*R*0.999;\";\n            G().property(\"ADBE Vector Transform Group\").property(\"ADBE Vector Group Opacity\").expression = glow\n                ? head + \" var B=Math.max(parent.effect(\\\"SQ Scan Glow Band\\\")(1)/100,0.001), d=P-k*(1-B)-B*0.5; (P>0 && P<1 && d>=-B*0.5 && d<B*0.5) ? 100*(1-Math.abs(d)/(B*0.5)) : 0;\"\n                : head + \" (P>=1 || (P>0 && P>=k)) ? 100 : 0;\";\n        }\n        return s;\n    }\n\n    var m = grid(\"SQ Scan Matte · \" + l.name, false);\n    if (o.glow) {\n        var g = grid(\"SQ Scan Glow · \" + l.name, true);\n        g.blendingMode = BlendingMode.ADD;\n        var gl = sqFx(g).addProperty(\"ADBE Glo2\");\n        try { gl.property(3).setValue(Math.max(10, size * 0.8)); gl.property(4).setValue(1.6); } catch (eg) {}\n    }\n    var done = false;\n    try { if (l.setTrackMatte) { l.setTrackMatte(m, TrackMatteType.ALPHA); done = true; } } catch (et) {}\n    if (!done) { m.moveBefore(l); l.trackMatteType = TrackMatteType.ALPHA; }\n    m.enabled = false;\n    return cells.length;\n}\n\nif (!comp) return \"Open a composition first.\";\nvar ls = [];\nfor (var i = 0; i < layers.length; i++) if (layers[i].property(\"ADBE Effect Parade\") && String(layers[i].name).indexOf(\"SQ Scan \") !== 0) ls.push(layers[i]);\nif (ls.length < 2) return \"Select 2 or more image layers, in the order you want them.\";\nvar t0 = comp.time, hold = params.hold, tr = params.transition, step = params.step;\n// stack: later images above earlier ones\nfor (var a = 1; a < ls.length; a++) ls[a].moveBefore(ls[a - 1]);\nfor (var j = 0; j < ls.length; j++) {\n    var l = ls[j], tin = t0 + j * hold, tout = t0 + (j + 1) * hold + tr;\n    l.startTime += tin - l.inPoint;\n    if (j < ls.length - 1) { try { l.outPoint = Math.max(tin + 0.1, tout); } catch (e) {} }\n    if (j > 0) {\n        sqScan(comp, l, { t0: tin, dur: tr, size: params.size, dir: \"random\", random: 100, band: 22, color: \"#FFFFFF\", glow: params.glow });\n        // previous card steps down in scale while it gets covered\n        var prev = ls[j - 1], sc = prev.property(\"ADBE Transform Group\").property(\"ADBE Scale\");\n        var base = sc.valueAtTime(tin, false), steps = 3;\n        for (var s = 0; s <= steps; s++) {\n            var f = 1 - (step / 100) * (s / steps), v = [];\n            for (var d = 0; d < base.length; d++) v.push(d < 2 ? base[d] * f : base[d]);\n            var kt = tin + tr * (s / steps);\n            sc.setValueAtTime(kt, v);\n            var ki = sc.nearestKeyIndex(kt);\n            try { sc.setInterpolationTypeAtKey(ki, KeyframeInterpolationType.HOLD, KeyframeInterpolationType.HOLD); } catch (e2) {}\n        }\n    }\n}\nreturn \"Block Flow: \" + ls.length + \" images, \" + (ls.length - 1) + \" block transitions\";\n"
   },
   {
    "id": "pixel-scan",
    "name": "Pixel Scan Reveal",
-   "version": 1,
+   "version": 2,
    "order": 4,
-   "status": "soon",
-   "description": "Glowing pixel squares scan in and reveal a layer.",
+   "status": "ready",
+   "description": "Glowing pixel squares scan across and reveal the selected layer (any layer: comp, shape, text, image).",
    "icon": "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><rect x=\"3\" y=\"3\" width=\"5\" height=\"5\" rx=\"1\"/><rect x=\"10\" y=\"3\" width=\"5\" height=\"5\" rx=\"1\" opacity=\".6\"/><rect x=\"3\" y=\"10\" width=\"5\" height=\"5\" rx=\"1\" opacity=\".6\"/><rect x=\"10\" y=\"10\" width=\"5\" height=\"5\" rx=\"1\" opacity=\".3\"/><rect x=\"17\" y=\"17\" width=\"4\" height=\"4\" rx=\"1\" opacity=\".3\"/></svg>",
    "colors": [
     "#4BFF8A",
     "#1AE0A0"
-   ]
+   ],
+   "runLabel": "Reveal",
+   "params": [
+    {
+     "id": "direction",
+     "label": "Direction",
+     "type": "select",
+     "options": [
+      "Left → Right",
+      "Right → Left",
+      "Top → Bottom",
+      "Bottom → Top",
+      "Center out",
+      "Random"
+     ],
+     "value": "Left → Right"
+    },
+    {
+     "id": "size",
+     "label": "Block size",
+     "type": "slider",
+     "min": 6,
+     "max": 120,
+     "value": 24,
+     "unit": "px"
+    },
+    {
+     "id": "duration",
+     "label": "Duration",
+     "type": "slider",
+     "min": 0.2,
+     "max": 5,
+     "step": 0.1,
+     "value": 1.2,
+     "unit": "s"
+    },
+    {
+     "id": "random",
+     "label": "Randomness",
+     "type": "slider",
+     "min": 0,
+     "max": 100,
+     "value": 45,
+     "unit": "%"
+    },
+    {
+     "id": "band",
+     "label": "Glow band",
+     "type": "slider",
+     "min": 2,
+     "max": 60,
+     "value": 18,
+     "unit": "%"
+    },
+    {
+     "id": "color",
+     "label": "Glow colour",
+     "type": "select",
+     "options": [
+      "Cyan",
+      "White",
+      "Purple",
+      "Pink",
+      "Orange",
+      "Green"
+     ],
+     "value": "Cyan"
+    },
+    {
+     "id": "glow",
+     "label": "Glowing squares",
+     "type": "checkbox",
+     "value": true
+    }
+   ],
+   "requires": "2.0",
+   "script": "// ---- Squeezy add-on helpers (ExtendScript, ES3) ----\nfunction sqFx(l) { return l.property(\"ADBE Effect Parade\"); }\nfunction sqCtrl(l, match, name, v) {\n    var p = sqFx(l).property(name);\n    if (p && p.matchName !== match) { p.remove(); p = null; }\n    if (!p) { p = sqFx(l).addProperty(match); p.name = name; p = sqFx(l).property(name); }\n    try { if (v !== undefined && v !== null) p.property(1).setValue(v); } catch (e) {}\n    return sqFx(l).property(name);\n}\nfunction sqSlider(l, name, v) { return sqCtrl(l, \"ADBE Slider Control\", name, v); }\nfunction sqCheckbox(l, name, v) { return sqCtrl(l, \"ADBE Checkbox Control\", name, v ? 1 : 0); }\nfunction sqHex(h) { var n = parseInt(String(h).replace(\"#\", \"\"), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1]; }\nfunction sqRemoveFx(l, prefix) {\n    var fx = sqFx(l); if (!fx) return;\n    for (var i = fx.numProperties; i >= 1; i--) if (String(fx.property(i).name).indexOf(prefix) === 0) fx.property(i).remove();\n}\nfunction sqRemoveKids(comp, l, prefix) {\n    for (var i = comp.numLayers; i >= 1; i--) {\n        var c = comp.layer(i);\n        if (c.parent && c.parent.index === l.index && String(c.name).indexOf(prefix) === 0) c.remove();\n    }\n}\nfunction sqEaseKeys(prop) {\n    for (var k = 1; k <= prop.numKeys; k++) {\n        var dims = 1; try { var v = prop.keyValue(k); if (v instanceof Array) dims = v.length; } catch (e) {}\n        if (prop.propertyValueType === PropertyValueType.TwoD_SPATIAL || prop.propertyValueType === PropertyValueType.ThreeD_SPATIAL) dims = 1;\n        var a = [], b = [];\n        for (var d = 0; d < dims; d++) { a.push(new KeyframeEase(0, 45)); b.push(new KeyframeEase(0, 45)); }\n        try { prop.setTemporalEaseAtKey(k, a, b); } catch (e2) {}\n    }\n}\n\n// ---- pixel grid reveal (used by Pixel Scan Reveal and Block Flow) ----\n// Builds a block matte + optional glowing block layer, both parented to the target layer.\nfunction sqScan(comp, l, o) {\n    var r = l.sourceRectAtTime(o.t0, false);\n    if (!r || r.width < 1 || r.height < 1) throw new Error(l.name + \" has nothing visible at the current time\");\n    var size = Math.max(4, o.size), cols, rows;\n    do { cols = Math.ceil(r.width / size); rows = Math.ceil(r.height / size); if (cols * rows > 700) size *= 1.15; } while (cols * rows > 700);\n\n    sqRemoveKids(comp, l, \"SQ Scan \");\n    sqRemoveFx(l, \"SQ Scan \");\n    sqSlider(l, \"SQ Scan Progress\", 0);\n    sqSlider(l, \"SQ Scan Random\", o.random);\n    sqSlider(l, \"SQ Scan Glow Band\", o.band);\n    var pr = sqFx(l).property(\"SQ Scan Progress\").property(1);\n    pr.setValueAtTime(o.t0, 0);\n    pr.setValueAtTime(o.t0 + o.dur, 100);\n    sqEaseKeys(pr);\n\n    var cells = [];\n    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {\n        var cx = r.left + (x + 0.5) * size, cy = r.top + (y + 0.5) * size, u;\n        var nx = cols > 1 ? x / (cols - 1) : 0, ny = rows > 1 ? y / (rows - 1) : 0;\n        switch (o.dir) {\n            case \"rtl\": u = 1 - nx; break;\n            case \"ttb\": u = ny; break;\n            case \"btt\": u = 1 - ny; break;\n            case \"center\": u = Math.min(1, Math.sqrt((nx - 0.5) * (nx - 0.5) + (ny - 0.5) * (ny - 0.5)) / 0.7072); break;\n            case \"random\": u = Math.random(); break;\n            default: u = nx;\n        }\n        cells.push({ x: cx, y: cy, u: u, q: Math.random() });\n    }\n\n    function grid(name, glow) {\n        var s = comp.layers.addShape();\n        s.name = name;\n        s.moveBefore(l);\n        s.parent = l;\n        try { s.property(\"ADBE Transform Group\").property(\"ADBE Anchor Point\").setValue([0, 0]); } catch (e) {}\n        try { s.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([0, 0]); } catch (e1) { try { s.property(\"ADBE Transform Group\").property(\"ADBE Position\").setValue([0, 0, 0]); } catch (e2) {} }\n        var root = function () { return s.property(\"ADBE Root Vectors Group\"); };\n        var bs = glow ? size * 0.78 : size + 1;\n        var col = glow ? sqHex(o.color) : [1, 1, 1, 1];\n        for (var i = 0; i < cells.length; i++) {\n            var c = cells[i], k = (c.u * 1).toFixed(4), qq = c.q.toFixed(4);\n            var gi = root().addProperty(\"ADBE Vector Group\").propertyIndex;\n            var G = function () { return root().property(gi); };\n            G().property(\"ADBE Vectors Group\").addProperty(\"ADBE Vector Shape - Rect\");\n            G().property(\"ADBE Vectors Group\").property(1).property(\"ADBE Vector Rect Size\").setValue([bs, bs]);\n            G().property(\"ADBE Vectors Group\").addProperty(\"ADBE Vector Graphic - Fill\");\n            G().property(\"ADBE Vectors Group\").property(2).property(\"ADBE Vector Fill Color\").setValue(col);\n            var T = G().property(\"ADBE Vector Transform Group\");\n            T.property(\"ADBE Vector Position\").setValue([c.x, c.y]);\n            var head = \"var P=parent.effect(\\\"SQ Scan Progress\\\")(1)/100, R=parent.effect(\\\"SQ Scan Random\\\")(1)/100; var k=\" + k + \"*(1-R)+\" + qq + \"*R*0.999;\";\n            G().property(\"ADBE Vector Transform Group\").property(\"ADBE Vector Group Opacity\").expression = glow\n                ? head + \" var B=Math.max(parent.effect(\\\"SQ Scan Glow Band\\\")(1)/100,0.001), d=P-k*(1-B)-B*0.5; (P>0 && P<1 && d>=-B*0.5 && d<B*0.5) ? 100*(1-Math.abs(d)/(B*0.5)) : 0;\"\n                : head + \" (P>=1 || (P>0 && P>=k)) ? 100 : 0;\";\n        }\n        return s;\n    }\n\n    var m = grid(\"SQ Scan Matte · \" + l.name, false);\n    if (o.glow) {\n        var g = grid(\"SQ Scan Glow · \" + l.name, true);\n        g.blendingMode = BlendingMode.ADD;\n        var gl = sqFx(g).addProperty(\"ADBE Glo2\");\n        try { gl.property(3).setValue(Math.max(10, size * 0.8)); gl.property(4).setValue(1.6); } catch (eg) {}\n    }\n    var done = false;\n    try { if (l.setTrackMatte) { l.setTrackMatte(m, TrackMatteType.ALPHA); done = true; } } catch (et) {}\n    if (!done) { m.moveBefore(l); l.trackMatteType = TrackMatteType.ALPHA; }\n    m.enabled = false;\n    return cells.length;\n}\n\nif (!comp) return \"Open a composition first.\";\nif (!layers.length) return \"Select the layer to reveal.\";\nvar COLORS = { \"Cyan\": \"#3CC8F0\", \"White\": \"#FFFFFF\", \"Purple\": \"#8B6CFF\", \"Pink\": \"#FF4D9A\", \"Orange\": \"#FF8A1A\", \"Green\": \"#4BFF8A\" };\nvar DIRS = { \"Left → Right\": \"ltr\", \"Right → Left\": \"rtl\", \"Top → Bottom\": \"ttb\", \"Bottom → Top\": \"btt\", \"Center out\": \"center\", \"Random\": \"random\" };\nvar n = 0;\nfor (var i = 0; i < layers.length; i++) {\n    var l = layers[i];\n    if (!l.property(\"ADBE Effect Parade\") || String(l.name).indexOf(\"SQ Scan \") === 0) continue;\n    sqScan(comp, l, { t0: comp.time, dur: params.duration, size: params.size, dir: DIRS[params.direction] || \"ltr\",\n        random: params.random, band: params.band, color: COLORS[params.color] || \"#3CC8F0\", glow: params.glow });\n    n++;\n}\nreturn n ? \"Pixel Scan Reveal on \" + n + \" layer\" + (n > 1 ? \"s\" : \"\") + \". Retime with the \\\"SQ Scan Progress\\\" keyframes\" : \"Nothing to reveal in the selection.\";\n"
   },
   {
    "id": "text-sync",

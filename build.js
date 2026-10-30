@@ -28,7 +28,16 @@ var presets = fs.readdirSync(presetDir)
 var enginePath = path.join(dir, "engine.json");
 var addonDir = path.join(dir, "addons");
 var addons = fs.existsSync(addonDir) ? fs.readdirSync(addonDir).filter(function (f) { return /\.json$/.test(f); })
-  .map(function (f) { return JSON.parse(fs.readFileSync(path.join(addonDir, f), "utf8")); })
+  .map(function (f) {
+    var a = JSON.parse(fs.readFileSync(path.join(addonDir, f), "utf8"));
+    if (a.scriptFile) {
+      a.script = (a.include || []).concat([a.scriptFile]).map(function (src) {
+        return fs.readFileSync(path.join(addonDir, "src", src), "utf8");
+      }).join("\n");
+      delete a.scriptFile; delete a.include;
+    }
+    return a;
+  })
   .sort(function (a, b) { return (a.order || 999) - (b.order || 999); }) : [];
 var lib = {
   name: "Squeezy Text Library",

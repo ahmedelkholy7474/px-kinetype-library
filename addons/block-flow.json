@@ -1,13 +1,65 @@
 {
   "id": "block-flow",
   "name": "Block Flow",
-  "version": 1,
+  "version": 2,
   "order": 3,
-  "status": "soon",
-  "description": "Images side by side, swapping with grid-block glitch transitions.",
+  "status": "ready",
+  "description": "Select images in order: each one takes over the last with a block-glitch transition while the previous card steps down in scale.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><rect x=\"3\" y=\"3\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"13\" y=\"3\" width=\"8\" height=\"8\" rx=\"1.5\" opacity=\".55\"/><rect x=\"3\" y=\"13\" width=\"8\" height=\"8\" rx=\"1.5\" opacity=\".55\"/><rect x=\"13\" y=\"13\" width=\"8\" height=\"8\" rx=\"1.5\"/></svg>",
   "colors": [
     "#C04CFF",
     "#E040C8"
-  ]
+  ],
+  "include": [
+    "_common.jsx"
+  ],
+  "scriptFile": "block-flow.jsx",
+  "runLabel": "Build Flow",
+  "params": [
+    {
+      "id": "hold",
+      "label": "Hold",
+      "type": "slider",
+      "min": 0.3,
+      "max": 5,
+      "step": 0.1,
+      "value": 1.5,
+      "unit": "s"
+    },
+    {
+      "id": "transition",
+      "label": "Transition",
+      "type": "slider",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "value": 0.8,
+      "unit": "s"
+    },
+    {
+      "id": "size",
+      "label": "Block size",
+      "type": "slider",
+      "min": 10,
+      "max": 200,
+      "value": 60,
+      "unit": "px"
+    },
+    {
+      "id": "step",
+      "label": "Scale down",
+      "type": "slider",
+      "min": 0,
+      "max": 40,
+      "value": 10,
+      "unit": "%"
+    },
+    {
+      "id": "glow",
+      "label": "Glitch squares",
+      "type": "checkbox",
+      "value": true
+    }
+  ],
+  "requires": "2.0"
 }

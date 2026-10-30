@@ -1,13 +1,76 @@
 {
   "id": "kashida-stretch",
   "name": "Kashida Stretch",
-  "version": 1,
+  "version": 2,
   "order": 1,
-  "status": "soon",
-  "description": "Arabic text: the kashida stretches (\u062e\u0648\u0644\u064a \u2190 \u062e\u0640\u0640\u0640\u0640\u0648\u0644\u064a) with a light bounce.",
+  "status": "ready",
+  "description": "Arabic text: the kashida stretches out (خولي ← خــــولي) with a light bounce, and can fold back at the end.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M3 14h4M17 14h4M7 14c2 0 2-4 5-4s3 4 5 4\"/></svg>",
   "colors": [
     "#E0703A",
     "#E8A030"
-  ]
+  ],
+  "include": [
+    "_common.jsx"
+  ],
+  "scriptFile": "kashida.jsx",
+  "runLabel": "Stretch",
+  "params": [
+    {
+      "id": "position",
+      "label": "Where",
+      "type": "select",
+      "options": [
+        "Middle of each word",
+        "After first letter",
+        "Longest word only",
+        "Every connection"
+      ],
+      "value": "Middle of each word"
+    },
+    {
+      "id": "amount",
+      "label": "Kashida length",
+      "type": "slider",
+      "min": 1,
+      "max": 20,
+      "value": 6
+    },
+    {
+      "id": "duration",
+      "label": "Duration",
+      "type": "slider",
+      "min": 0.1,
+      "max": 3,
+      "step": 0.05,
+      "value": 0.6,
+      "unit": "s"
+    },
+    {
+      "id": "bounce",
+      "label": "Bounce",
+      "type": "slider",
+      "min": 0,
+      "max": 100,
+      "value": 40,
+      "unit": "%"
+    },
+    {
+      "id": "delay",
+      "label": "Delay",
+      "type": "slider",
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "value": 0,
+      "unit": "s"
+    },
+    {
+      "id": "collapse",
+      "label": "Fold back at end",
+      "type": "checkbox",
+      "value": true
+    }
+  ],
+  "requires": "2.0"
 }
