@@ -1,0 +1,25 @@
+{
+  "id": "flip-roll-swap",
+  "name": "Flip Roll Swap",
+  "category": "3d",
+  "version": 1,
+  "order": 10,
+  "added": "2026-10-30",
+  "source": "f4fda5cc_moma.mp4",
+  "requires": "1.6",
+  "seed": 103,
+  "layout": "sequence",
+  "overlap": 1.0,
+  "in": {
+    "animators": [
+      { "name": "Unfold", "basedOn": "chars", "stagger": 0.03, "dur": 0.55, "ease": "outExpo", "envelope": "from",
+        "props": { "scale": [100, 0], "position": [0, -95], "skew": 20 } }
+    ]
+  },
+  "out": {
+    "animators": [
+      { "name": "Fold Down", "basedOn": "chars", "order": "backward", "stagger": 0.03, "dur": 0.5, "ease": "outCubic", "envelope": "from",
+        "props": { "scale": [100, 0], "position": [0, 60], "skew": 20 } }
+    ]
+  }
+}
