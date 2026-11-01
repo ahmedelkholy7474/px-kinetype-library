@@ -1,10 +1,10 @@
 {
   "id": "block-flow",
   "name": "Block Flow",
-  "version": 3,
+  "version": 4,
   "order": 3,
   "status": "ready",
-  "description": "Cards side by side, overlapping. Each new image takes its slot through a grid-block glitch (crisp, mosaic and accent blocks) while the whole frame steps down in scale. Select layers in your comp, or images in the Project panel.",
+  "description": "Works with one image or many: cards side by side, overlapping, each new image takes its slot through a grid-block glitch while the frame steps down in scale. Select layers in your comp, or images in the Project panel.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><rect x=\"3\" y=\"3\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"13\" y=\"3\" width=\"8\" height=\"8\" rx=\"1.5\" opacity=\".55\"/><rect x=\"3\" y=\"13\" width=\"8\" height=\"8\" rx=\"1.5\" opacity=\".55\"/><rect x=\"13\" y=\"13\" width=\"8\" height=\"8\" rx=\"1.5\"/></svg>",
   "colors": [
     "#C04CFF",
@@ -86,6 +86,16 @@
       "max": 2,
       "step": 0.05,
       "value": 0.5,
+      "unit": "s"
+    },
+    {
+      "id": "holdEnd",
+      "label": "Hold at end",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "value": 1,
       "unit": "s"
     },
     {

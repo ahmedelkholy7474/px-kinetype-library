@@ -95,11 +95,11 @@ function buildPlan(n, o) {
     }
     for (i = 0; i < n; i++) {
         if (i + S < n) { cards[i].tOut = cards[i + S].tIn; }
-        else if (o.exitAtEnd) { cards[i].tOut = q(cards[i].tIn + cycle); }
+        else if (o.exitAtEnd) { cards[i].tOut = q(cards[i].tIn + cycle + (o.holdEnd || 0)); }
     }
     var lastT = 0;
     for (i = 0; i < n; i++) {
-        var e = (cards[i].tOut !== null) ? cards[i].tOut + D : cards[i].tIn + cycle;
+        var e = (cards[i].tOut !== null) ? cards[i].tOut + D : cards[i].tIn + cycle + (o.holdEnd || 0);
         if (e > lastT) { lastT = e; }
     }
     var duration = q(lastT + (o.exitAtEnd ? 0.4 : 0));
@@ -633,6 +633,7 @@ o.accentAmt = clamp(N("accentAmt", 35), 0, 100) / 100;
 o.mosaicAmt = clamp(N("mosaicAmt", 40), 0, 100) / 100;
 o.mosaicDetail = clamp(Math.round(N("mosaicDetail", 2)), 1, 6);
 o.jitter = Math.max(0, N("jitter", 14));
+o.holdEnd = Math.max(0, N("holdEnd", 1));
 o.clipToShape = !!params.clipToShape;
 o.exitAtEnd = !!params.exitAtEnd;
 o.rightOnTop = !!params.rightOnTop;
