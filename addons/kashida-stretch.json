@@ -1,7 +1,7 @@
 {
   "id": "kashida-stretch",
   "name": "Kashida Stretch",
-  "version": 2,
+  "version": 3,
   "order": 1,
   "status": "ready",
   "description": "Arabic text: the kashida stretches out (خولي ← خــــولي) with a light bounce, and can fold back at the end.",

@@ -1,5 +1,9 @@
 // Squeezy add-on: Pixel Scan Reveal (ported from PixelScan_Reveal v1.0 by Kholy)
 // runs as function(params, comp, layers)
+// ---- type checks that do not depend on instanceof ----
+function sqIsComp(it) { try { if (it instanceof CompItem) return true; } catch (e) {} try { return !!it && typeof it.numLayers === "number" && typeof it.layers === "object"; } catch (e2) { return false; } }
+function sqIsFolder(it) { try { if (it instanceof FolderItem) return true; } catch (e) {} try { return !!it && typeof it.numItems === "number" && typeof it.items === "object" && typeof it.numLayers !== "number"; } catch (e2) { return false; } }
+function sqIsCamOrLight(L) { try { if (L.property("ADBE Camera Options Group") || L.property("ADBE Light Options Group")) return true; } catch (e) {} return false; }
 var SCRIPT_NAME = "Pixel Scan Reveal";
 var VERSION = "1.0";
 var TAG = "PixelScanRig";
@@ -138,7 +142,7 @@ function intToHex(n) {
 function getFolder() {
     for (var i = 1; i <= app.project.numItems; i++) {
         var it = app.project.item(i);
-        if (it instanceof FolderItem && it.name === FOLDER_NAME) { return it; }
+        if (sqIsFolder(it) && it.name === FOLDER_NAME) { return it; }
     }
     return app.project.items.addFolder(FOLDER_NAME);
 }
@@ -435,14 +439,14 @@ function removeRigs(comp, layers) {
     }
     for (i = app.project.numItems; i >= 1; i--) {
         var it = app.project.item(i);
-        if (it instanceof CompItem) {
+        if (sqIsComp(it)) {
             t = readTag(it.comment);
             if (t && ids[t.id] && it.usedIn.length === 0) { it.remove(); }
         }
     }
     for (i = app.project.numItems; i >= 1; i--) {
         var f = app.project.item(i);
-        if (f instanceof FolderItem && f.name === FOLDER_NAME && f.numItems === 0) { f.remove(); }
+        if (sqIsFolder(f) && f.name === FOLDER_NAME && f.numItems === 0) { f.remove(); }
     }
     return count;
 }
@@ -477,7 +481,7 @@ var opts = {
 var targets = [], skipped = [], ctrls = [], errors = [], i;
 for (i = 0; i < layers.length; i++) {
     var L = layers[i];
-    if (L instanceof CameraLayer || L instanceof LightLayer) { skipped.push(L.name); continue; }
+    if (sqIsCamOrLight(L)) { skipped.push(L.name); continue; }
     if (readTag(L.comment)) { skipped.push(L.name + " (already a rig)"); continue; }
     if (hasTrackMatteSafe(L)) { skipped.push(L.name + " (has a track matte, precompose it)"); continue; }
     if (L.parent) { skipped.push(L.name + " (parented, precompose it)"); continue; }

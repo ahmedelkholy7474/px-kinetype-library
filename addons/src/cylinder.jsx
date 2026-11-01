@@ -2,7 +2,7 @@ if (!comp) return "Open a composition first.";
 var ls = [];
 for (var i = 0; i < layers.length; i++) {
     var L0 = layers[i];
-    if (!L0.property("ADBE Effect Parade") || (L0 instanceof CameraLayer) || (L0 instanceof LightLayer)) continue;
+    if (!L0.property("ADBE Effect Parade") || sqIsCamOrLight(L0)) continue;
     if (String(L0.name).indexOf("SQ Cylinder") === 0) continue;
     ls.push(L0);
 }

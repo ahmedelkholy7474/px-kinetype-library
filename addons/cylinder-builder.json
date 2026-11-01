@@ -1,7 +1,7 @@
 {
   "id": "cylinder-builder",
   "name": "Cylinder Builder",
-  "version": 3,
+  "version": 4,
   "order": 2,
   "status": "ready",
   "description": "Select 2+ layers: they go on a rotating 3D cylinder. The card facing the camera stays sharp; the rest blur, fade and darken by depth as it turns.",

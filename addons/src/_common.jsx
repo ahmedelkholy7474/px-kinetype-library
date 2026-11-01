@@ -1,3 +1,7 @@
+// ---- type checks that do not depend on instanceof ----
+function sqIsComp(it) { try { if (it instanceof CompItem) return true; } catch (e) {} try { return !!it && typeof it.numLayers === "number" && typeof it.layers === "object"; } catch (e2) { return false; } }
+function sqIsFolder(it) { try { if (it instanceof FolderItem) return true; } catch (e) {} try { return !!it && typeof it.numItems === "number" && typeof it.items === "object" && typeof it.numLayers !== "number"; } catch (e2) { return false; } }
+function sqIsCamOrLight(L) { try { if (L.property("ADBE Camera Options Group") || L.property("ADBE Light Options Group")) return true; } catch (e) {} return false; }
 // ---- Squeezy add-on helpers (ExtendScript, ES3) ----
 function sqFx(l) { return l.property("ADBE Effect Parade"); }
 function sqCtrl(l, match, name, v) {

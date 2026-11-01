@@ -1,7 +1,11 @@
+// ---- type checks that do not depend on instanceof ----
+function sqIsComp(it) { try { if (it instanceof CompItem) return true; } catch (e) {} try { return !!it && typeof it.numLayers === "number" && typeof it.layers === "object"; } catch (e2) { return false; } }
+function sqIsFolder(it) { try { if (it instanceof FolderItem) return true; } catch (e) {} try { return !!it && typeof it.numItems === "number" && typeof it.items === "object" && typeof it.numLayers !== "number"; } catch (e2) { return false; } }
+function sqIsCamOrLight(L) { try { if (L.property("ADBE Camera Options Group") || L.property("ADBE Light Options Group")) return true; } catch (e) {} return false; }
 // Squeezy Duplicator: deep-duplicate comps so every nested precomp becomes its own copy
 var roots = [];
 var psel = app.project.selection;
-for (var i = 0; i < psel.length; i++) if (psel[i] instanceof CompItem) roots.push(psel[i]);
+for (var i = 0; i < psel.length; i++) if (sqIsComp(psel[i])) roots.push(psel[i]);
 if (!roots.length && comp) roots.push(comp);
 if (!roots.length) return "Select a comp in the Project panel (or open one).";
 
@@ -50,7 +54,7 @@ function dup(c, isRoot) {
     renames.push([c.name, d.name]);
     for (var i = 1; i <= d.numLayers; i++) {
         var L = d.layer(i);
-        if (L.source && L.source instanceof CompItem) {
+        if (L.source && sqIsComp(L.source)) {
             var nd = dup(L.source);
             if (nd !== L.source) L.replaceSource(nd, false);
         }

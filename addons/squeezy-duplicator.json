@@ -1,7 +1,7 @@
 {
   "id": "squeezy-duplicator",
   "name": "Squeezy Duplicator",
-  "version": 1,
+  "version": 2,
   "order": 0.5,
   "status": "ready",
   "requires": "2.0",

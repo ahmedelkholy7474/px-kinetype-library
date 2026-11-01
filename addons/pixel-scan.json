@@ -1,7 +1,7 @@
 {
   "id": "pixel-scan",
   "name": "Pixel Scan Reveal",
-  "version": 3,
+  "version": 4,
   "order": 4,
   "status": "ready",
   "description": "Pixel-block wipe reveal with a glowing glass scan strip on the edge: turbulence, mosaic, smear, rainbow and glow. Everything stays editable on a control null.",
