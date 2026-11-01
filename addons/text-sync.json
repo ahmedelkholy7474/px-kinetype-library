@@ -1,13 +1,126 @@
 {
   "id": "text-sync",
   "name": "Text Sync",
-  "version": 1,
+  "version": 2,
   "order": 5,
-  "status": "soon",
-  "description": "Import an SRT and every word lands on time, animated in your font.",
+  "status": "ready",
+  "description": "Pick an .srt / .vtt file and every caption lands on time, word by word, animated. Select a text layer first to copy its font, size and colour.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"><path d=\"M3 12h2l2-5 3 10 3-8 2 6 2-3h4\"/></svg>",
   "colors": [
     "#FF4D6D",
     "#FF9A3C"
+  ],
+  "requires": "2.0",
+  "include": [
+    "_common.jsx"
+  ],
+  "scriptFile": "text-sync.jsx",
+  "runLabel": "Import SRT",
+  "params": [
+    {
+      "id": "action",
+      "label": "Action",
+      "type": "select",
+      "options": [
+        "Import captions",
+        "Remove captions"
+      ],
+      "value": "Import captions"
+    },
+    {
+      "id": "mode",
+      "label": "Mode",
+      "type": "select",
+      "options": [
+        "Words build up",
+        "One word at a time",
+        "Whole line"
+      ],
+      "value": "Words build up"
+    },
+    {
+      "id": "animation",
+      "label": "Animation",
+      "type": "select",
+      "options": [
+        "Pop",
+        "Fade up",
+        "Blur in",
+        "Typewriter"
+      ],
+      "value": "Pop"
+    },
+    {
+      "id": "highlight",
+      "label": "Highlight colour (empty = off)",
+      "type": "text",
+      "value": "#FFD23F"
+    },
+    {
+      "id": "position",
+      "label": "Position",
+      "type": "select",
+      "options": [
+        "Bottom",
+        "Center",
+        "Top",
+        "Like selected layer"
+      ],
+      "value": "Bottom"
+    },
+    {
+      "id": "perCaption",
+      "label": "Words per caption (0 = as file)",
+      "type": "slider",
+      "min": 0,
+      "max": 8,
+      "value": 0
+    },
+    {
+      "id": "speed",
+      "label": "Speed (frames)",
+      "type": "slider",
+      "min": 1,
+      "max": 20,
+      "value": 6
+    },
+    {
+      "id": "font",
+      "label": "Font (PostScript name)",
+      "type": "text",
+      "value": ""
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "slider",
+      "min": 20,
+      "max": 250,
+      "value": 80
+    },
+    {
+      "id": "color",
+      "label": "Colour",
+      "type": "text",
+      "value": "#FFFFFF"
+    },
+    {
+      "id": "outline",
+      "label": "Outline",
+      "type": "slider",
+      "min": 0,
+      "max": 20,
+      "value": 0
+    },
+    {
+      "id": "startAt",
+      "label": "Start at",
+      "type": "select",
+      "options": [
+        "Playhead",
+        "Comp start"
+      ],
+      "value": "Playhead"
+    }
   ]
 }

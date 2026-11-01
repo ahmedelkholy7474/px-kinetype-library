@@ -39,6 +39,11 @@ var addons = fs.existsSync(addonDir) ? fs.readdirSync(addonDir).filter(function 
     return a;
   })
   .sort(function (a, b) { return (a.order || 999) - (b.order || 999); }) : [];
+var modDir = path.join(dir, "modules"), modules = {};
+if (fs.existsSync(modDir)) fs.readdirSync(modDir).filter(function (f) { return /\.json$/.test(f); }).forEach(function (f) {
+  var m = JSON.parse(fs.readFileSync(path.join(modDir, f), "utf8"));
+  modules[m.id] = { version: m.version || 1, script: fs.readFileSync(path.join(modDir, m.scriptFile), "utf8") };
+});
 var lib = {
   name: "Squeezy Text Library",
   schema: 1,
@@ -46,7 +51,8 @@ var lib = {
   updated: new Date().toISOString(),
   categories: categories,
   presets: presets,
-  addons: addons
+  addons: addons,
+  modules: modules
 };
 
 var json = JSON.stringify(lib, null, 1);
