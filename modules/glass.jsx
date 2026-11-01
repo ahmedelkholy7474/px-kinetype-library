@@ -253,17 +253,16 @@ function glassOne(comp, S, o, folder) {
         var ch = shapeComp.layer(q);
         if (ch.index === PV.index || ch.parent) continue;
         ch.parent = PV;
-        gexpr(ch.property("ADBE Transform Group").property("ADBE Opacity"), "value * " + CTW + ".transform.opacity / 100");
+        gexpr(ch.property("ADBE Transform Group").property("ADBE Opacity"), "try { value * " + CTW + ".transform.opacity / 100; } catch (e) { value; }");
     }
     var tg = PV.property("ADBE Transform Group");
-    gexpr(tg.property("ADBE Position"), "var C = " + CTW + ", p = C.toComp(C.transform.anchorPoint);\n[p[0], p[1]]");
-    gexpr(tg.property("ADBE Scale"), "var C = " + CTW + ", s = C.transform.scale;\n[s[0], s[1]]");
-    gexpr(tg.property("ADBE Rotate Z"), CTW + ".transform.rotation");
-    PV.locked = true;
+    gexpr(tg.property("ADBE Position"), "try { var c = " + CTW + ".transform.position; [c[0], c[1]]; } catch (e) { value; }");
+    gexpr(tg.property("ADBE Scale"), "try { var s = " + CTW + ".transform.scale; [s[0], s[1]]; } catch (e) { value; }");
+    gexpr(tg.property("ADBE Rotate Z"), "try { " + CTW + ".transform.rotation; } catch (e) { value; }");
 
     C.moveToBeginning();
     var helpers = [A, TI, SHD, INN, GLO, RM, CH, SH, MX, MY];
-    for (var h = 0; h < helpers.length; h++) { try { helpers[h].shy = true; helpers[h].label = 0; } catch (e14) {} try { helpers[h].locked = true; } catch (e15) {} }
+    for (var h = 0; h < helpers.length; h++) { try { helpers[h].shy = true; helpers[h].label = 0; } catch (e14) {} }
     try { P.label = 0; } catch (e16) {}
     try { comp.hideShyLayers = true; } catch (e17) {}
     return C;
@@ -292,8 +291,8 @@ function glassApply(o) {
     if (!ls[0].setTrackMatte) throw new Error("Squeezy Glass needs After Effects 2023 or newer.");
     var folder = sqFolder("Squeezy Glass"), made = [];
     for (var a = 0; a < ls.length; a++) made.push(glassOne(comp, ls[a], o, folder));
-    for (var b = 1; b <= comp.numLayers; b++) comp.layer(b).selected = false;
-    for (var c = 0; c < made.length; c++) made[c].selected = true;
+    for (var b = 1; b <= comp.numLayers; b++) { try { comp.layer(b).selected = false; } catch (eb) {} }
+    for (var c = 0; c < made.length; c++) { try { made[c].selected = true; } catch (ec) {} }
     return "Liquid glass on " + made.length + " layer" + (made.length === 1 ? "" : "s") + ". Move / scale / rotate the \"SQ Glass Controller\" layer";
 }
 

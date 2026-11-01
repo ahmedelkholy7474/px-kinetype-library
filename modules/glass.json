@@ -1,6 +1,6 @@
 {
   "id": "glass",
-  "version": 2,
+  "version": 3,
   "scriptFile": "glass.jsx",
-  "changes": "One Controller layer moves / scales / rotates / fades the whole glass and holds every control; helper layers are hidden and locked"
+  "changes": "Controller rig made fail-safe: the glass always renders"
 }
