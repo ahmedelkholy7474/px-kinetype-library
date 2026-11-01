@@ -1,0 +1,75 @@
+{
+  "id": "rain-swing",
+  "name": "Rain Swing",
+  "category": "echo",
+  "version": 1,
+  "order": 36,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 293,
+  "in": {
+    "animators": [
+      {
+        "name": "Fall",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.055,
+        "dur": 1.1,
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            -98
+          ]
+        },
+        "ease": "outBack"
+      },
+      {
+        "name": "Swing",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.055,
+        "dur": 1.1,
+        "envelope": "from",
+        "props": {
+          "rotation": 28
+        },
+        "ease": "outElastic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.055,
+        "dur": 0.25,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.055,
+        "dur": 1.0,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#FFD963"
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "echo": {
+    "color": "#F5FF00",
+    "length": 0.12,
+    "blur": 9,
+    "amount": 59
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "id": "blue-echo",
+  "name": "Blue Echo",
+  "category": "echo",
+  "version": 1,
+  "order": 32,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 271,
+  "in": {
+    "animators": [
+      {
+        "name": "Rise",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.07,
+        "dur": 1.65,
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            14
+          ]
+        },
+        "bez": [
+          0.19,
+          1,
+          0.22,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.07,
+        "dur": 0.5,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.07,
+        "dur": 1.1,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#2F6BFF"
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "echo": {
+    "color": "#2F6BFF",
+    "length": 0.24,
+    "blur": 3,
+    "amount": 60
+  }
+}

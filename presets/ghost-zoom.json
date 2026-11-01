@@ -1,0 +1,92 @@
+{
+  "id": "ghost-zoom",
+  "name": "Ghost Zoom",
+  "category": "echo",
+  "version": 1,
+  "order": 37,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 307,
+  "in": {
+    "animators": [
+      {
+        "name": "Zoom",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 0.9,
+        "envelope": "from",
+        "props": {
+          "scale": [
+            260,
+            260
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 0.8,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            16,
+            16
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 0.5,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 1.1,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#BFE9FF"
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "echo": {
+    "color": "#8FD3FF",
+    "length": 0.4,
+    "blur": 10,
+    "amount": 70,
+    "place": "over"
+  },
+  "grouping": "lines"
+}

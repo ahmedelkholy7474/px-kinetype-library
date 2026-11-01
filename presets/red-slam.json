@@ -1,0 +1,95 @@
+{
+  "id": "red-slam",
+  "name": "Red Slam",
+  "category": "echo",
+  "version": 1,
+  "order": 33,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 277,
+  "in": {
+    "animators": [
+      {
+        "name": "Jump",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.12,
+        "dur": 0.85,
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            -46
+          ]
+        },
+        "ease": "outBack",
+        "easeAmount": 2.4
+      },
+      {
+        "name": "Grow",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.12,
+        "dur": 0.85,
+        "envelope": "from",
+        "props": {
+          "scale": [
+            82,
+            82
+          ]
+        },
+        "ease": "outBack"
+      },
+      {
+        "name": "Squash",
+        "basedOn": "words",
+        "start": 0.32,
+        "stagger": 0.12,
+        "dur": 0.3,
+        "envelope": "pulse",
+        "props": {
+          "scale": [
+            118,
+            82
+          ]
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.12,
+        "dur": 0.2,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.12,
+        "dur": 0.9,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#FF2D2D"
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "echo": {
+    "color": "#FF2D2D",
+    "length": 0.18,
+    "blur": 3,
+    "amount": 80
+  },
+  "grouping": "words"
+}

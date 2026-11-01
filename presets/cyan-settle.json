@@ -1,0 +1,85 @@
+{
+  "id": "cyan-settle",
+  "name": "Cyan Settle",
+  "category": "clean",
+  "version": 1,
+  "order": 25,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 233,
+  "in": {
+    "animators": [
+      {
+        "name": "Settle",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 0.9,
+        "envelope": "from",
+        "props": {
+          "scale": [
+            112,
+            112
+          ]
+        },
+        "bez": [
+          0.22,
+          1,
+          0.36,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 0.8,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            9,
+            9
+          ]
+        },
+        "bez": [
+          0.22,
+          1,
+          0.36,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 0.45,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 1.3,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#00FFDB"
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "grouping": "lines"
+}

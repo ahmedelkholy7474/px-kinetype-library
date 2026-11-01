@@ -1,0 +1,94 @@
+{
+  "id": "pop-trail",
+  "name": "Pop Trail",
+  "category": "echo",
+  "version": 1,
+  "order": 31,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 269,
+  "in": {
+    "animators": [
+      {
+        "name": "Pop",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.04,
+        "dur": 0.8,
+        "envelope": "from",
+        "props": {
+          "scale": [
+            30,
+            30
+          ],
+          "position": [
+            0,
+            14
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.04,
+        "dur": 0.3,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.04,
+        "dur": 0.6,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            8,
+            8
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.04,
+        "dur": 0.9,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#C084FC"
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "echo": {
+    "color": "#C084FC",
+    "length": 0.25,
+    "blur": 4,
+    "amount": 90
+  }
+}

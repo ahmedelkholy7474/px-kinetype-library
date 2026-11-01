@@ -1,0 +1,72 @@
+{
+  "id": "drop-slide",
+  "name": "Drop Slide",
+  "category": "clean",
+  "version": 1,
+  "order": 22,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 223,
+  "in": {
+    "animators": [
+      {
+        "name": "Drop",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.06,
+        "dur": 1.0,
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            -18
+          ]
+        },
+        "bez": [
+          0.075,
+          0.82,
+          0.165,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.06,
+        "dur": 0.6,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.06,
+        "dur": 0.8,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            9,
+            9
+          ]
+        },
+        "bez": [
+          0.075,
+          0.82,
+          0.165,
+          1
+        ],
+        "ease": "outCubic"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  }
+}

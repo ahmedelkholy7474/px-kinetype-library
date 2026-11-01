@@ -7,7 +7,7 @@
    "keepGlyph": false
   }
  },
- "updated": "2026-11-01T22:02:00.009Z",
+ "updated": "2026-11-01T23:47:59.705Z",
  "categories": [
   {
    "id": "all",
@@ -50,6 +50,18 @@
    "name": "Glow",
    "icon": "glow",
    "color": "#E8A030"
+  },
+  {
+   "id": "clean",
+   "name": "Clean & Smooth",
+   "icon": "clean",
+   "color": "#3AA8FF"
+  },
+  {
+   "id": "echo",
+   "name": "Echo Trails",
+   "icon": "echo",
+   "color": "#FF4D9A"
   }
  ],
  "presets": [
@@ -1185,6 +1197,1379 @@
      }
     ]
    }
+  },
+  {
+   "id": "soft-slide",
+   "name": "Soft Slide",
+   "category": "clean",
+   "version": 1,
+   "order": 21,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 211,
+   "in": {
+    "animators": [
+     {
+      "name": "Rise",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.07,
+      "dur": 1.5,
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        24
+       ]
+      },
+      "bez": [
+       0.65,
+       0.65,
+       0.05,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.07,
+      "dur": 0.8,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.07,
+      "dur": 1,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        5,
+        5
+       ]
+      },
+      "bez": [
+       0.65,
+       0.65,
+       0.05,
+       1
+      ],
+      "ease": "outCubic"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "drop-slide",
+   "name": "Drop Slide",
+   "category": "clean",
+   "version": 1,
+   "order": 22,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 223,
+   "in": {
+    "animators": [
+     {
+      "name": "Drop",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.06,
+      "dur": 1,
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        -18
+       ]
+      },
+      "bez": [
+       0.075,
+       0.82,
+       0.165,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.06,
+      "dur": 0.6,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.06,
+      "dur": 0.8,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        9,
+        9
+       ]
+      },
+      "bez": [
+       0.075,
+       0.82,
+       0.165,
+       1
+      ],
+      "ease": "outCubic"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "blur-lift",
+   "name": "Blur Lift",
+   "category": "clean",
+   "version": 1,
+   "order": 23,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 227,
+   "in": {
+    "animators": [
+     {
+      "name": "Lift",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.08,
+      "dur": 1.1,
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        24
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.08,
+      "dur": 0.7,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.08,
+      "dur": 1,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        12,
+        12
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "zoom-slam",
+   "name": "Zoom Slam",
+   "category": "clean",
+   "version": 1,
+   "order": 24,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 229,
+   "in": {
+    "animators": [
+     {
+      "name": "Zoom",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 1.3,
+      "envelope": "from",
+      "props": {
+       "scale": [
+        0,
+        0
+       ]
+      },
+      "bez": [
+       0.2,
+       0.85,
+       0.05,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 1,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        18,
+        18
+       ]
+      },
+      "bez": [
+       0.2,
+       0.85,
+       0.05,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 0.35,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "grouping": "lines"
+  },
+  {
+   "id": "cyan-settle",
+   "name": "Cyan Settle",
+   "category": "clean",
+   "version": 1,
+   "order": 25,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 233,
+   "in": {
+    "animators": [
+     {
+      "name": "Settle",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 0.9,
+      "envelope": "from",
+      "props": {
+       "scale": [
+        112,
+        112
+       ]
+      },
+      "bez": [
+       0.22,
+       1,
+       0.36,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 0.8,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        9,
+        9
+       ]
+      },
+      "bez": [
+       0.22,
+       1,
+       0.36,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 0.45,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 1.3,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#00FFDB"
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "grouping": "lines"
+  },
+  {
+   "id": "word-grow",
+   "name": "Word Grow",
+   "category": "clean",
+   "version": 1,
+   "order": 26,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 239,
+   "in": {
+    "animators": [
+     {
+      "name": "Grow",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.1,
+      "dur": 1,
+      "envelope": "from",
+      "props": {
+       "scale": [
+        39,
+        39
+       ]
+      },
+      "bez": [
+       0.075,
+       0.82,
+       0.165,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.1,
+      "dur": 0.35,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.1,
+      "dur": 1,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FF3B30"
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "grouping": "words"
+  },
+  {
+   "id": "swing-in",
+   "name": "Swing In",
+   "category": "clean",
+   "version": 1,
+   "order": 27,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 241,
+   "in": {
+    "animators": [
+     {
+      "name": "Swing",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.075,
+      "dur": 0.65,
+      "envelope": "from",
+      "props": {
+       "rotation": -12,
+       "position": [
+        -10,
+        6
+       ]
+      },
+      "bez": [
+       0.25,
+       0.1,
+       0.25,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.075,
+      "dur": 0.4,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.075,
+      "dur": 0.6,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        8,
+        8
+       ]
+      },
+      "bez": [
+       0.25,
+       0.1,
+       0.25,
+       1
+      ],
+      "ease": "outCubic"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "tracking-in",
+   "name": "Tracking In",
+   "category": "clean",
+   "version": 1,
+   "order": 28,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 251,
+   "in": {
+    "animators": [
+     {
+      "name": "Spread",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 1.8,
+      "envelope": "from",
+      "props": {
+       "tracking": 355
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 1.2,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        12,
+        12
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 0.6,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "gravity-drop",
+   "name": "Gravity Drop",
+   "category": "clean",
+   "version": 1,
+   "order": 29,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 257,
+   "in": {
+    "animators": [
+     {
+      "name": "Drop",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.03,
+      "dur": 1.25,
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        -120
+       ]
+      },
+      "ease": "outBounce"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.03,
+      "dur": 0.25,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.03,
+      "dur": 0.45,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        10,
+        10
+       ]
+      },
+      "ease": "outCubic"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   }
+  },
+  {
+   "id": "comet-trail",
+   "name": "Comet Trail",
+   "category": "echo",
+   "version": 1,
+   "order": 30,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 263,
+   "in": {
+    "animators": [
+     {
+      "name": "Fly",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.09,
+      "dur": 0.9,
+      "envelope": "from",
+      "props": {
+       "position": [
+        170,
+        0
+       ]
+      },
+      "bez": [
+       0.19,
+       1,
+       0.22,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.09,
+      "dur": 0.3,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.09,
+      "dur": 0.6,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        5,
+        5
+       ]
+      },
+      "bez": [
+       0.19,
+       1,
+       0.22,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.09,
+      "dur": 1,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FF2E88"
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "echo": {
+    "color": "#FF2E88",
+    "length": 0.42,
+    "blur": 8,
+    "amount": 85
+   },
+   "grouping": "words"
+  },
+  {
+   "id": "pop-trail",
+   "name": "Pop Trail",
+   "category": "echo",
+   "version": 1,
+   "order": 31,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 269,
+   "in": {
+    "animators": [
+     {
+      "name": "Pop",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.04,
+      "dur": 0.8,
+      "envelope": "from",
+      "props": {
+       "scale": [
+        30,
+        30
+       ],
+       "position": [
+        0,
+        14
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.04,
+      "dur": 0.3,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.04,
+      "dur": 0.6,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        8,
+        8
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.04,
+      "dur": 0.9,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#C084FC"
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "echo": {
+    "color": "#C084FC",
+    "length": 0.25,
+    "blur": 4,
+    "amount": 90
+   }
+  },
+  {
+   "id": "blue-echo",
+   "name": "Blue Echo",
+   "category": "echo",
+   "version": 1,
+   "order": 32,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 271,
+   "in": {
+    "animators": [
+     {
+      "name": "Rise",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.07,
+      "dur": 1.65,
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        14
+       ]
+      },
+      "bez": [
+       0.19,
+       1,
+       0.22,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.07,
+      "dur": 0.5,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.07,
+      "dur": 1.1,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#2F6BFF"
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "echo": {
+    "color": "#2F6BFF",
+    "length": 0.24,
+    "blur": 3,
+    "amount": 60
+   }
+  },
+  {
+   "id": "red-slam",
+   "name": "Red Slam",
+   "category": "echo",
+   "version": 1,
+   "order": 33,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 277,
+   "in": {
+    "animators": [
+     {
+      "name": "Jump",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.12,
+      "dur": 0.85,
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        -46
+       ]
+      },
+      "ease": "outBack",
+      "easeAmount": 2.4
+     },
+     {
+      "name": "Grow",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.12,
+      "dur": 0.85,
+      "envelope": "from",
+      "props": {
+       "scale": [
+        82,
+        82
+       ]
+      },
+      "ease": "outBack"
+     },
+     {
+      "name": "Squash",
+      "basedOn": "words",
+      "start": 0.32,
+      "stagger": 0.12,
+      "dur": 0.3,
+      "envelope": "pulse",
+      "props": {
+       "scale": [
+        118,
+        82
+       ]
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.12,
+      "dur": 0.2,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "words",
+      "start": 0,
+      "stagger": 0.12,
+      "dur": 0.9,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FF2D2D"
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "echo": {
+    "color": "#FF2D2D",
+    "length": 0.18,
+    "blur": 3,
+    "amount": 80
+   },
+   "grouping": "words"
+  },
+  {
+   "id": "mint-drift",
+   "name": "Mint Drift",
+   "category": "echo",
+   "version": 1,
+   "order": 34,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 281,
+   "in": {
+    "animators": [
+     {
+      "name": "Drift",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.05,
+      "dur": 0.8,
+      "envelope": "from",
+      "props": {
+       "rotation": -18,
+       "position": [
+        -12,
+        6
+       ]
+      },
+      "bez": [
+       0.25,
+       1,
+       0.5,
+       1
+      ],
+      "ease": "outCubic",
+      "order": "backward"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.05,
+      "dur": 0.35,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine",
+      "order": "backward"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.05,
+      "dur": 0.7,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        10,
+        10
+       ]
+      },
+      "bez": [
+       0.25,
+       1,
+       0.5,
+       1
+      ],
+      "ease": "outCubic",
+      "order": "backward"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.05,
+      "dur": 0.9,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#3DFFB5"
+      },
+      "ease": "inOutSine",
+      "order": "backward"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "echo": {
+    "color": "#3DFFB5",
+    "length": 0.5,
+    "blur": 14,
+    "amount": 75
+   }
+  },
+  {
+   "id": "gold-halo",
+   "name": "Gold Halo",
+   "category": "echo",
+   "version": 1,
+   "order": 35,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 283,
+   "in": {
+    "animators": [
+     {
+      "name": "Fall",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.03,
+      "dur": 0.85,
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        -21
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic",
+      "order": "center"
+     },
+     {
+      "name": "Spin",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.03,
+      "dur": 0.85,
+      "envelope": "from",
+      "props": {
+       "rotation": 70
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic",
+      "order": "center",
+      "mod": {
+       "type": "expr",
+       "code": "return __i < (__n-1)/2 ? -1 : 1;"
+      }
+     },
+     {
+      "name": "Fade",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.03,
+      "dur": 0.35,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine",
+      "order": "center"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.03,
+      "dur": 0.7,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        10,
+        10
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic",
+      "order": "center"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.03,
+      "dur": 1.2,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FFC23D"
+      },
+      "ease": "inOutSine",
+      "order": "center"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "echo": {
+    "color": "#FFB000",
+    "length": 0.25,
+    "blur": 6,
+    "amount": 70
+   },
+   "glow": {
+    "size": 28,
+    "intensity": 1.6,
+    "settle": 0.3
+   }
+  },
+  {
+   "id": "rain-swing",
+   "name": "Rain Swing",
+   "category": "echo",
+   "version": 1,
+   "order": 36,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 293,
+   "in": {
+    "animators": [
+     {
+      "name": "Fall",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.055,
+      "dur": 1.1,
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        -98
+       ]
+      },
+      "ease": "outBack"
+     },
+     {
+      "name": "Swing",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.055,
+      "dur": 1.1,
+      "envelope": "from",
+      "props": {
+       "rotation": 28
+      },
+      "ease": "outElastic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.055,
+      "dur": 0.25,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "chars",
+      "start": 0,
+      "stagger": 0.055,
+      "dur": 1,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#FFD963"
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "echo": {
+    "color": "#F5FF00",
+    "length": 0.12,
+    "blur": 9,
+    "amount": 59
+   }
+  },
+  {
+   "id": "ghost-zoom",
+   "name": "Ghost Zoom",
+   "category": "echo",
+   "version": 1,
+   "order": 37,
+   "added": "2026-11-02",
+   "source": "Clean & Echo pack",
+   "requires": "2.5",
+   "seed": 307,
+   "in": {
+    "animators": [
+     {
+      "name": "Zoom",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 0.9,
+      "envelope": "from",
+      "props": {
+       "scale": [
+        260,
+        260
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Focus",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 0.8,
+      "envelope": "from",
+      "props": {
+       "blur": [
+        16,
+        16
+       ]
+      },
+      "bez": [
+       0.16,
+       1,
+       0.3,
+       1
+      ],
+      "ease": "outCubic"
+     },
+     {
+      "name": "Fade",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 0.5,
+      "envelope": "from",
+      "props": {
+       "opacity": 0
+      },
+      "ease": "inOutSine"
+     },
+     {
+      "name": "Colour",
+      "basedOn": "lines",
+      "start": 0,
+      "stagger": 0,
+      "dur": 1.1,
+      "envelope": "from",
+      "props": {
+       "fillColor": "#BFE9FF"
+      },
+      "ease": "inOutSine"
+     }
+    ]
+   },
+   "out": {
+    "mirror": true
+   },
+   "echo": {
+    "color": "#8FD3FF",
+    "length": 0.4,
+    "blur": 10,
+    "amount": 70,
+    "place": "over"
+   },
+   "grouping": "lines"
   }
  ],
  "addons": [

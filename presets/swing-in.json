@@ -1,0 +1,73 @@
+{
+  "id": "swing-in",
+  "name": "Swing In",
+  "category": "clean",
+  "version": 1,
+  "order": 27,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 241,
+  "in": {
+    "animators": [
+      {
+        "name": "Swing",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.075,
+        "dur": 0.65,
+        "envelope": "from",
+        "props": {
+          "rotation": -12,
+          "position": [
+            -10,
+            6
+          ]
+        },
+        "bez": [
+          0.25,
+          0.1,
+          0.25,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.075,
+        "dur": 0.4,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.075,
+        "dur": 0.6,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            8,
+            8
+          ]
+        },
+        "bez": [
+          0.25,
+          0.1,
+          0.25,
+          1
+        ],
+        "ease": "outCubic"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  }
+}

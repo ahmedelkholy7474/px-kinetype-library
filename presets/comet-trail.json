@@ -1,0 +1,91 @@
+{
+  "id": "comet-trail",
+  "name": "Comet Trail",
+  "category": "echo",
+  "version": 1,
+  "order": 30,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 263,
+  "in": {
+    "animators": [
+      {
+        "name": "Fly",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.09,
+        "dur": 0.9,
+        "envelope": "from",
+        "props": {
+          "position": [
+            170,
+            0
+          ]
+        },
+        "bez": [
+          0.19,
+          1,
+          0.22,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.09,
+        "dur": 0.3,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.09,
+        "dur": 0.6,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            5,
+            5
+          ]
+        },
+        "bez": [
+          0.19,
+          1,
+          0.22,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.09,
+        "dur": 1.0,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#FF2E88"
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "echo": {
+    "color": "#FF2E88",
+    "length": 0.42,
+    "blur": 8,
+    "amount": 85
+  },
+  "grouping": "words"
+}

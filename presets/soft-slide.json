@@ -1,0 +1,72 @@
+{
+  "id": "soft-slide",
+  "name": "Soft Slide",
+  "category": "clean",
+  "version": 1,
+  "order": 21,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 211,
+  "in": {
+    "animators": [
+      {
+        "name": "Rise",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.07,
+        "dur": 1.5,
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            24
+          ]
+        },
+        "bez": [
+          0.65,
+          0.65,
+          0.05,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.07,
+        "dur": 0.8,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.07,
+        "dur": 1.0,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            5,
+            5
+          ]
+        },
+        "bez": [
+          0.65,
+          0.65,
+          0.05,
+          1
+        ],
+        "ease": "outCubic"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  }
+}

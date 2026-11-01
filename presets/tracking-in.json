@@ -1,0 +1,69 @@
+{
+  "id": "tracking-in",
+  "name": "Tracking In",
+  "category": "clean",
+  "version": 1,
+  "order": 28,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 251,
+  "in": {
+    "animators": [
+      {
+        "name": "Spread",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 1.8,
+        "envelope": "from",
+        "props": {
+          "tracking": 355
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 1.2,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            12,
+            12
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "lines",
+        "start": 0,
+        "stagger": 0,
+        "dur": 0.6,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  }
+}

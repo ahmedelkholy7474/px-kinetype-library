@@ -1,0 +1,95 @@
+{
+  "id": "mint-drift",
+  "name": "Mint Drift",
+  "category": "echo",
+  "version": 1,
+  "order": 34,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 281,
+  "in": {
+    "animators": [
+      {
+        "name": "Drift",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.05,
+        "dur": 0.8,
+        "envelope": "from",
+        "props": {
+          "rotation": -18,
+          "position": [
+            -12,
+            6
+          ]
+        },
+        "bez": [
+          0.25,
+          1,
+          0.5,
+          1
+        ],
+        "ease": "outCubic",
+        "order": "backward"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.05,
+        "dur": 0.35,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine",
+        "order": "backward"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.05,
+        "dur": 0.7,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            10,
+            10
+          ]
+        },
+        "bez": [
+          0.25,
+          1,
+          0.5,
+          1
+        ],
+        "ease": "outCubic",
+        "order": "backward"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.05,
+        "dur": 0.9,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#3DFFB5"
+        },
+        "ease": "inOutSine",
+        "order": "backward"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "echo": {
+    "color": "#3DFFB5",
+    "length": 0.5,
+    "blur": 14,
+    "amount": 75
+  }
+}

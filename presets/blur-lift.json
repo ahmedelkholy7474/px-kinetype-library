@@ -1,0 +1,72 @@
+{
+  "id": "blur-lift",
+  "name": "Blur Lift",
+  "category": "clean",
+  "version": 1,
+  "order": 23,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 227,
+  "in": {
+    "animators": [
+      {
+        "name": "Lift",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.08,
+        "dur": 1.1,
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            24
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.08,
+        "dur": 0.7,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.08,
+        "dur": 1.0,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            12,
+            12
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  }
+}

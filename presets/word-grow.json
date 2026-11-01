@@ -1,0 +1,64 @@
+{
+  "id": "word-grow",
+  "name": "Word Grow",
+  "category": "clean",
+  "version": 1,
+  "order": 26,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 239,
+  "in": {
+    "animators": [
+      {
+        "name": "Grow",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.1,
+        "dur": 1.0,
+        "envelope": "from",
+        "props": {
+          "scale": [
+            39,
+            39
+          ]
+        },
+        "bez": [
+          0.075,
+          0.82,
+          0.165,
+          1
+        ],
+        "ease": "outCubic"
+      },
+      {
+        "name": "Fade",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.1,
+        "dur": 0.35,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "words",
+        "start": 0,
+        "stagger": 0.1,
+        "dur": 1.0,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#FF3B30"
+        },
+        "ease": "inOutSine"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "grouping": "words"
+}

@@ -1,0 +1,122 @@
+{
+  "id": "gold-halo",
+  "name": "Gold Halo",
+  "category": "echo",
+  "version": 1,
+  "order": 35,
+  "added": "2026-11-02",
+  "source": "Clean & Echo pack",
+  "requires": "2.5",
+  "seed": 283,
+  "in": {
+    "animators": [
+      {
+        "name": "Fall",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.03,
+        "dur": 0.85,
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            -21
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic",
+        "order": "center"
+      },
+      {
+        "name": "Spin",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.03,
+        "dur": 0.85,
+        "envelope": "from",
+        "props": {
+          "rotation": 70
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic",
+        "order": "center",
+        "mod": {
+          "type": "expr",
+          "code": "return __i < (__n-1)/2 ? -1 : 1;"
+        }
+      },
+      {
+        "name": "Fade",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.03,
+        "dur": 0.35,
+        "envelope": "from",
+        "props": {
+          "opacity": 0
+        },
+        "ease": "inOutSine",
+        "order": "center"
+      },
+      {
+        "name": "Focus",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.03,
+        "dur": 0.7,
+        "envelope": "from",
+        "props": {
+          "blur": [
+            10,
+            10
+          ]
+        },
+        "bez": [
+          0.16,
+          1,
+          0.3,
+          1
+        ],
+        "ease": "outCubic",
+        "order": "center"
+      },
+      {
+        "name": "Colour",
+        "basedOn": "chars",
+        "start": 0,
+        "stagger": 0.03,
+        "dur": 1.2,
+        "envelope": "from",
+        "props": {
+          "fillColor": "#FFC23D"
+        },
+        "ease": "inOutSine",
+        "order": "center"
+      }
+    ]
+  },
+  "out": {
+    "mirror": true
+  },
+  "echo": {
+    "color": "#FFB000",
+    "length": 0.25,
+    "blur": 6,
+    "amount": 70
+  },
+  "glow": {
+    "size": 28,
+    "intensity": 1.6,
+    "settle": 0.3
+  }
+}
