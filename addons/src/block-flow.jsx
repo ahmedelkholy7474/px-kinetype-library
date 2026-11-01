@@ -326,14 +326,18 @@ function natCmp(a, b) {
     return ax.length - bx.length;
 }
 
+function isCompItem(it) {
+    try { if (it instanceof CompItem) { return true; } } catch (e) {}
+    try { return it && typeof it.numLayers === "number" && typeof it.layers === "object"; } catch (e2) { return false; }
+}
 function isUsableSource(it) {
     if (!it) { return false; }
-    if (it instanceof CompItem) { return true; }
-    if (it instanceof FootageItem) {
-        if (it.mainSource instanceof SolidSource) { return false; }
-        return it.width > 0 && it.height > 0;
-    }
-    return false;
+    if (isCompItem(it)) { return true; }
+    var ms = null;
+    try { ms = it.mainSource; } catch (e) { ms = null; }
+    if (!ms) { return false; }
+    try { if (ms.color !== undefined && ms.file === undefined) { return false; } } catch (e2) {}   // solid
+    return it.width > 0 && it.height > 0;
 }
 
 // images/comps selected in the Project panel (sorted by name)
@@ -393,7 +397,7 @@ function cropToContent(outer, time) {
         for (j = 1; j <= nc.numLayers; j++) { inner.push(nc.layer(j)); }
         for (j = 0; j < inner.length; j++) {
             var Ly = inner[j];
-            if (!Ly.enabled || !(Ly instanceof AVLayer)) { continue; }
+            if (!Ly.enabled || cardSkipReason(Ly)) { continue; }
             var r = Ly.sourceRectAtTime(tt, false);
             var tg = Ly.property("ADBE Transform Group");
             var ap = tg.property("ADBE Anchor Point").valueAtTime(tt, false);
@@ -460,7 +464,7 @@ function cardSizes(items, layers, o, time) {
 }
 
 function itemHasAlpha(it) {
-    if (it instanceof CompItem) { return true; }
+    if (isCompItem(it)) { return true; }
     try { return !!it.mainSource.hasAlpha; } catch (e) { return false; }
 }
 
@@ -480,7 +484,7 @@ function build(items, o, progress) {
     var stamp = 1;
     for (var p = 1; p <= app.project.numItems; p++) {
         var mm = app.project.item(p).name.match(/^BlockFlow (\d+)$/);
-        if (mm && app.project.item(p) instanceof FolderItem) { stamp = Math.max(stamp, parseInt(mm[1], 10) + 1); }
+        if (mm && (function (x) { try { return x instanceof FolderItem || typeof x.numItems === "number"; } catch (e) { return false; } })(app.project.item(p))) { stamp = Math.max(stamp, parseInt(mm[1], 10) + 1); }
     }
     var folder = app.project.items.addFolder("BlockFlow " + stamp);
     var pre = app.project.items.addFolder("BF precomps " + stamp);
