@@ -9,7 +9,8 @@ var GLASS_CTRL = [
     ["SQ Glass Refraction", 70], ["SQ Glass Bevel", 40], ["SQ Glass Dispersion", 15], ["SQ Glass Frost", 0],
     ["SQ Glass Tint Amount", 12], ["SQ Glass Highlight", 70], ["SQ Glass Rim", 85], ["SQ Glass Rim Width", 1.6],
     ["SQ Glass Light Angle", 135], ["SQ Glass Inner Shadow", 35], ["SQ Glass Darken", 0], ["SQ Glass Grain", 0],
-    ["SQ Glass Shadow", 35]
+    ["SQ Glass Shadow", 35],
+    ["SQ Glass Reed Bend", 0], ["SQ Glass Reed Width", 40], ["SQ Glass Reed Angle", 0], ["SQ Glass Reed Shade", 35]
 ];
 var GLASS_TINT = "SQ Glass Tint";
 function sqFolder(name) {
@@ -158,7 +159,36 @@ function glassOne(comp, S, o, folder) {
         return c;
     }
 
+    // reeded / fluted glass: one black->white ramp per rib, repeated across the frame (50% grey = no shift)
+    function reedComp(name) {
+        var c = newComp(name);
+        c.layers.addSolid([0.5, 0.5, 0.5], "grey", c.width, c.height, c.pixelAspect, c.duration);
+        var R = c.layers.addShape(); R.name = "reeds";
+        var RW = "Math.max(" + CTL("SQ Glass Reed Width") + ", 2)", D = "Math.sqrt(thisComp.width*thisComp.width + thisComp.height*thisComp.height)";
+        var root = function () { return R.property("ADBE Root Vectors Group"); };
+        root().addProperty("ADBE Vector Group");
+        var G = function () { return root().property(1); }, V = function () { return G().property("ADBE Vectors Group"); };
+        V().addProperty("ADBE Vector Shape - Rect");
+        V().addProperty("ADBE Vector Graphic - G-Fill");
+        gexpr(V().property(1).property("ADBE Vector Rect Size"), "[" + RW + ", " + D + "]");
+        try { V().property(2).property("ADBE Vector Grad Type").setValue(1); } catch (e0) {}
+        gexpr(V().property(2).property("ADBE Vector Grad Start Pt"), "[-" + RW + "/2, 0]");
+        gexpr(V().property(2).property("ADBE Vector Grad End Pt"), "[" + RW + "/2, 0]");
+        gexpr(G().property("ADBE Vector Transform Group").property("ADBE Vector Position"),
+            "var w = " + RW + ", n = Math.ceil(" + D + "/w) + 2;\n[-(n - 1) * w / 2, 0]");
+        root().addProperty("ADBE Vector Filter - Repeater");
+        var RP = function () { return root().property(2); };
+        gexpr(RP().property("ADBE Vector Repeater Copies"), "Math.min(Math.ceil(" + D + "/" + RW + ") + 2, 600)");
+        gexpr(RP().property("ADBE Vector Repeater Transform").property("ADBE Vector Repeater Position"), "[" + RW + ", 0]");
+        var T = R.property("ADBE Transform Group");
+        T.property("ADBE Anchor Point").setValue([0, 0]);
+        T.property("ADBE Position").setValue([c.width / 2, c.height / 2]);
+        gexpr(T.property("ADBE Rotate Z"), CTL("SQ Glass Reed Angle"));
+        return c;
+    }
+
     gstep("maps " + base);
+    var rd = reedComp("SQ Glass Reeds \u00B7 " + base);
     var mx = embossComp("SQ Glass Map X \u00B7 " + base, "0", "250");
     var my = embossComp("SQ Glass Map Y \u00B7 " + base, "90", "250");
     var ms = embossComp("SQ Glass Shade \u00B7 " + base, CTL("SQ Glass Light Angle"), CTL("SQ Glass Highlight") + "*1.6");
@@ -199,6 +229,17 @@ function glassOne(comp, S, o, folder) {
     }
     displace("SQ Glass Refract X", MX, true);
     displace("SQ Glass Refract Y", MY, false);
+    // reeds: every rib shifts the image across itself (perpendicular to the ribs)
+    var RD = comp.layers.add(rd); RD.name = rd.name; RD.moveAfter(MY); RD.enabled = false;
+    var rdf = fxAdd(A, "ADBE Displacement Map", "SQ Glass Reed Shift");
+    rdf.property(1).setValue(RD.index);
+    rdf = gfx(A).property("SQ Glass Reed Shift");
+    try { rdf.property(2).setValue(5); rdf.property(4).setValue(5); } catch (er1) {}
+    var RB = CL + '.effect("SQ Glass Reed Bend")(1)', RA = CL + '.effect("SQ Glass Reed Angle")(1)*Math.PI/180';
+    gexpr(rdf.property(3), RB + "*Math.cos(" + RA + ")");
+    gexpr(gfx(A).property("SQ Glass Reed Shift").property(5), RB + "*Math.sin(" + RA + ")");
+    try { gfx(A).property("SQ Glass Reed Shift").property(6).setValue(1); } catch (er2) {}
+    try { gfx(A).property("SQ Glass Reed Shift").property(8).setValue(1); } catch (er3) {}
     fxAdd(A, "ADBE Gaussian Blur 2", "SQ Glass Frost Blur");
     gexpr(gfx(A).property("SQ Glass Frost Blur").property(1), CL + '.effect("SQ Glass Frost")(1)');
     try { gfx(A).property("SQ Glass Frost Blur").property(3).setValue(1); } catch (e10) {}
@@ -229,6 +270,8 @@ function glassOne(comp, S, o, folder) {
     var GLO = overlay(gc, BlendingMode.SCREEN, GL + '.effect("SQ Glass Highlight")(1)*0.8'); GLO.moveBefore(INN);
     var RM = overlay(rc, BlendingMode.SCREEN, GL + '.effect("SQ Glass Rim")(1)'); RM.moveBefore(GLO);
     var CH = overlay(cc, BlendingMode.SCREEN, GL + '.effect("SQ Glass Dispersion")(1)*0.7'); CH.moveBefore(RM);
+    // rib shading: each flute darker on one side, lighter on the other
+    var RS = overlay(rd, BlendingMode.SOFT_LIGHT, "(" + GL + '.effect("SQ Glass Reed Bend")(1) > 0) ? ' + GL + '.effect("SQ Glass Reed Shade")(1) : 0'); RS.moveBefore(TI);
 
     // soft drop shadow under the glass (the glass refracts it too)
     var SH = comp.layers.add(shapeComp); SH.name = "SQ Glass Shadow \u00B7 " + base; SH.moveAfter(A);
@@ -240,7 +283,7 @@ function glassOne(comp, S, o, folder) {
     gexpr(SH.property("ADBE Transform Group").property("ADBE Position"), "value + [0, " + SC + "*0.35]");
 
     P.enabled = false;
-    var all = [A, TI, SHD, INN, GLO, RM, CH, SH, P, MX, MY, C];
+    var all = [A, TI, SHD, INN, GLO, RM, CH, SH, P, MX, MY, RD, RS, C];
     for (var z = 0; z < all.length; z++) { try { all[z].inPoint = tin; all[z].outPoint = tout; } catch (e13) {} }
     P.comment = "Squeezy Glass: double-click to edit the shape. Move it with " + ctlName;
 
@@ -278,7 +321,7 @@ function glassOne(comp, S, o, folder) {
     }
 
     C.moveToBeginning();
-    var helpers = [A, TI, SHD, INN, GLO, RM, CH, SH, MX, MY];
+    var helpers = [A, TI, SHD, INN, GLO, RM, CH, SH, MX, MY, RD, RS];
     for (var h = 0; h < helpers.length; h++) { try { helpers[h].shy = true; helpers[h].label = 0; } catch (e14) {} }
     try { P.label = 0; } catch (e16) {}
     try { comp.hideShyLayers = true; } catch (e17) {}

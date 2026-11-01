@@ -1,6 +1,6 @@
 {
   "id": "glass",
-  "version": 6,
+  "version": 7,
   "scriptFile": "glass.jsx",
-  "changes": "Fixed: glass disappeared (AE 2025 makes new nulls 0% opacity). Select the Controller and press Apply to repair"
+  "changes": "New: Reeded (fluted) glass. Reed Bend / Width / Angle / Shade on the Controller"
 }
