@@ -282,6 +282,50 @@ function glassOne(comp, S, o, folder) {
     return C;
 }
 
+
+// ---------- diagnostics: a plain-text picture of the rig, saved to the Desktop ----------
+function gReportProp(pr) {
+    var t = "";
+    try { var v = pr.value; t += (v instanceof Array) ? "[" + v.join(", ") + "]" : String(v); } catch (e) { t += "?"; }
+    try { if (pr.expression) t += "  expr" + (pr.expressionEnabled ? "" : "(OFF)") + (pr.expressionError ? " ERROR: " + pr.expressionError : ""); } catch (e2) {}
+    return t;
+}
+function gReportLayer(L, out, pad) {
+    var T = L.property("ADBE Transform Group"), line = pad + L.index + " " + L.name + " | on=" + L.enabled;
+    try { line += " shy=" + L.shy + " in=" + L.inPoint.toFixed(2) + " out=" + L.outPoint.toFixed(2); } catch (e0) {}
+    try { if (L.hasTrackMatte) line += " matte=" + L.trackMatteType + (L.trackMatteLayer ? " by " + L.trackMatteLayer.name : ""); } catch (e1) {}
+    try { line += " blend=" + L.blendingMode; } catch (e3) {}
+    out.push(line);
+    var keys = [["A", "ADBE Anchor Point"], ["P", "ADBE Position"], ["S", "ADBE Scale"], ["R", "ADBE Rotate Z"], ["O", "ADBE Opacity"]];
+    for (var k = 0; k < keys.length; k++) { try { out.push(pad + "   " + keys[k][0] + " " + gReportProp(T.property(keys[k][1]))); } catch (e4) {} }
+    try { var r = L.sourceRectAtTime(L.containingComp.time, false); out.push(pad + "   rect " + [r.left, r.top, r.width, r.height].join(", ")); } catch (e5) {}
+    try {
+        var fx = gfx(L);
+        for (var f = 1; fx && f <= fx.numProperties; f++) {
+            var ef = fx.property(f), bad = [];
+            for (var q = 1; q <= ef.numProperties; q++) { try { var pp = ef.property(q); if (pp.expression) bad.push(q + "=" + gReportProp(pp)); else if (pp.propertyValueType !== PropertyValueType.NO_VALUE && f <= 16 && /^SQ Glass/.test(ef.name) && q === 1) bad.push(gReportProp(pp)); } catch (e6) {} }
+            out.push(pad + "   fx " + ef.name + " (" + ef.matchName + ")" + (ef.enabled ? "" : " OFF") + (bad.length ? " : " + bad.join(" ; ") : ""));
+        }
+    } catch (e7) {}
+}
+function glassReport(comp, note) {
+    var out = ["Squeezy Glass report " + new Date().toString(), "AE " + app.version + " | comp " + comp.name + " " + comp.width + "x" + comp.height + " t=" + comp.time + " | " + (note || "")];
+    var subs = {};
+    for (var i = 1; i <= comp.numLayers; i++) {
+        var L = comp.layer(i);
+        gReportLayer(L, out, "");
+        try { if (L.source && L.source.numLayers !== undefined && /^SQ Glass/.test(L.source.name)) subs[L.source.name] = L.source; } catch (e) {}
+    }
+    for (var n in subs) if (subs.hasOwnProperty(n)) {
+        out.push(""); out.push("== comp " + n);
+        for (var j = 1; j <= subs[n].numLayers; j++) gReportLayer(subs[n].layer(j), out, "  ");
+    }
+    try {
+        var f = new File(Folder.desktop.fsName + "/Squeezy Glass Report.txt");
+        f.encoding = "UTF-8"; f.open("w"); f.write(out.join("\n")); f.close();
+    } catch (ew) {}
+}
+
 function glassApply(o) {
     if (!comp) throw new Error("Open a composition first.");
     var sel = layers, ls = [];
@@ -300,14 +344,16 @@ function glassApply(o) {
             var tp = fx.property(GLASS_TINT); if (tp && o[GLASS_TINT]) { try { tp.property(1).setValue(o[GLASS_TINT]); } catch (et) {} }
         }
         if (!n) throw new Error("Draw a shape (or select a text / shape layer) first.");
-        return "Glass look updated";
+        try { glassReport(comp, "update"); } catch (er2) {}
+        return "Glass look updated (report on Desktop)";
     }
     if (!ls[0].setTrackMatte) throw new Error("Squeezy Glass needs After Effects 2023 or newer.");
     var folder = sqFolder("Squeezy Glass"), made = [];
     for (var a = 0; a < ls.length; a++) made.push(glassOne(comp, ls[a], o, folder));
+    try { glassReport(comp, "after apply"); } catch (er) {}
     for (var b = 1; b <= comp.numLayers; b++) { try { comp.layer(b).selected = false; } catch (eb) {} }
     for (var c = 0; c < made.length; c++) { try { made[c].selected = true; } catch (ec) {} }
-    return "Liquid glass on " + made.length + " layer" + (made.length === 1 ? "" : "s") + ". Move / scale / rotate the \"SQ Glass Controller\" layer";
+    return "Liquid glass on " + made.length + " layer" + (made.length === 1 ? "" : "s") + ". Move / scale / rotate the \"SQ Glass Controller\" layer. Report saved on Desktop";
 }
 
 function glassRemove() {

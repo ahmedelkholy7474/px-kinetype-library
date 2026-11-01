@@ -1,6 +1,6 @@
 {
   "id": "glass",
-  "version": 4,
+  "version": 5,
   "scriptFile": "glass.jsx",
-  "changes": "Controller rebuilt: the shape follows it by offset, so it never jumps or disappears"
+  "changes": "Writes a diagnostics report to the Desktop after Apply"
 }
