@@ -37,19 +37,47 @@ function fxAdd(l, match, name) {
 //  glow      wide soft band inside the edge, lit on both sides (Screen)
 //  rim       crisp specular edge, strong toward the light, softer opposite (Screen)
 //  shadow    soft drop shadow under the glass
+// visual centre of a layer in comp space (rotation / scale / anchor aware, no parent)
+function glassCenter(L, t) {
+    var r = { left: 0, top: 0, width: 0, height: 0 };
+    try { r = L.sourceRectAtTime(t, false); } catch (e) {}
+    var tr = L.property("ADBE Transform Group");
+    var a = tr.property("ADBE Anchor Point").valueAtTime(t, false), p = tr.property("ADBE Position").valueAtTime(t, false);
+    var sc = tr.property("ADBE Scale").valueAtTime(t, false), rot = 0;
+    try { rot = tr.property("ADBE Rotate Z").valueAtTime(t, false) * Math.PI / 180; } catch (e2) {}
+    var x = (r.left + r.width / 2 - a[0]) * sc[0] / 100, y = (r.top + r.height / 2 - a[1]) * sc[1] / 100;
+    if (L.parent) return [p[0], p[1]];
+    return [p[0] + x * Math.cos(rot) - y * Math.sin(rot), p[1] + x * Math.sin(rot) + y * Math.cos(rot)];
+}
+
 function glassOne(comp, S, o, folder) {
     var base = String(S.name).replace(/^SQ Glass Shape \u00B7 /, "");
     var tin = S.inPoint, tout = S.outPoint;
+    var ctr = glassCenter(S, comp.time);
     gstep("precompose " + base);
     var shapeComp = comp.layers.precompose([S.index], "SQ Glass Shape \u00B7 " + base, true);
     shapeComp.parentFolder = folder;
     var P = null;
-    for (var i = 1; i <= comp.numLayers; i++) if (comp.layer(i).source === shapeComp) { P = comp.layer(i); break; }
+    for (var i = 1; i <= comp.numLayers; i++) if (comp.layer(i).source && comp.layer(i).source.id === shapeComp.id) { P = comp.layer(i); break; }
     P.name = "SQ Glass Shape \u00B7 " + base;
-    var glassName = "SQ Glass \u00B7 " + base;
-    var CTL = function (n) { return 'comp("' + q2(comp.name) + '").layer("' + q2(glassName) + '").effect("' + n + '")(1)'; };
+    var glassName = "SQ Glass \u00B7 " + base, ctlName = "SQ Glass Controller \u00B7 " + base;
+    var CTL = function (n) { return 'comp("' + q2(comp.name) + '").layer("' + q2(ctlName) + '").effect("' + n + '")(1)'; };
     var ANG = CTL("SQ Glass Light Angle") + "*Math.PI/180";
     var LX = "Math.cos(" + ANG + ")", LY = "(-Math.sin(" + ANG + "))";        // 135 deg = light from top-left
+    // ONE controller: its transform moves / scales / rotates / fades the glass, its effects are the look
+    var C = comp.layers.addNull();
+    C.name = ctlName;
+    C.label = 9;
+    try { C.property("ADBE Transform Group").property("ADBE Position").setValue([ctr[0], ctr[1]]); } catch (ep) { C.property("ADBE Transform Group").property("ADBE Position").setValue([ctr[0], ctr[1], 0]); }
+    C.comment = "Squeezy Glass: move / scale / rotate / fade this layer. Look = Effect Controls. Edit the shape inside \"SQ Glass Shape \u00B7 " + base + "\".";
+    for (var k = 0; k < GLASS_CTRL.length; k++) {
+        var key = GLASS_CTRL[k][0], val = o[key] !== undefined ? o[key] : GLASS_CTRL[k][1];
+        var sl = gfx(C).addProperty("ADBE Slider Control"); sl.name = key;
+        try { gfx(C).property(key).property(1).setValue(val); } catch (e6) {}
+    }
+    var tc = gfx(C).addProperty("ADBE Color Control"); tc.name = GLASS_TINT;
+    try { gfx(C).property(GLASS_TINT).property(1).setValue(o[GLASS_TINT] || [0.96, 0.94, 1, 1]); } catch (e6b) {}
+    var CL = 'thisComp.layer("' + q2(ctlName) + '")';
 
     function newComp(name) {
         var c = app.project.items.addComp(name, comp.width, comp.height, comp.pixelAspect, comp.duration, comp.frameRate);
@@ -153,13 +181,6 @@ function glassOne(comp, S, o, folder) {
     A.adjustmentLayer = true;
     A.moveBefore(P);
     A.label = 11;
-    for (var k = 0; k < GLASS_CTRL.length; k++) {
-        var key = GLASS_CTRL[k][0], val = o[key] !== undefined ? o[key] : GLASS_CTRL[k][1];
-        var sl = gfx(A).addProperty("ADBE Slider Control"); sl.name = key;
-        try { gfx(A).property(key).property(1).setValue(val); } catch (e6) {}
-    }
-    var tc = gfx(A).addProperty("ADBE Color Control"); tc.name = GLASS_TINT;
-    try { gfx(A).property(GLASS_TINT).property(1).setValue(o[GLASS_TINT] || [0.96, 0.94, 1, 1]); } catch (e6b) {}
 
     var MX = comp.layers.add(mx), MY = comp.layers.add(my);
     MX.name = mx.name; MY.name = my.name;
@@ -170,24 +191,24 @@ function glassOne(comp, S, o, folder) {
         d.property(1).setValue(layer.index);
         d = gfx(A).property(name);
         try { d.property(2).setValue(5); d.property(4).setValue(5); } catch (e7) {}
-        gexpr(d.property(3), horiz ? '-effect("SQ Glass Refraction")(1)' : "0");
-        gexpr(gfx(A).property(name).property(5), horiz ? "0" : '-effect("SQ Glass Refraction")(1)');
+        gexpr(d.property(3), horiz ? "-" + CL + '.effect("SQ Glass Refraction")(1)' : "0");
+        gexpr(gfx(A).property(name).property(5), horiz ? "0" : "-" + CL + '.effect("SQ Glass Refraction")(1)');
         try { gfx(A).property(name).property(6).setValue(1); } catch (e8) {}
         try { gfx(A).property(name).property(8).setValue(1); } catch (e9) {}
     }
     displace("SQ Glass Refract X", MX, true);
     displace("SQ Glass Refract Y", MY, false);
     fxAdd(A, "ADBE Gaussian Blur 2", "SQ Glass Frost Blur");
-    gexpr(gfx(A).property("SQ Glass Frost Blur").property(1), 'effect("SQ Glass Frost")(1)');
+    gexpr(gfx(A).property("SQ Glass Frost Blur").property(1), CL + '.effect("SQ Glass Frost")(1)');
     try { gfx(A).property("SQ Glass Frost Blur").property(3).setValue(1); } catch (e10) {}
     fxAdd(A, "ADBE Brightness & Contrast 2", "SQ Glass Tone");
-    gexpr(gfx(A).property("SQ Glass Tone").property(1), '-effect("SQ Glass Darken")(1)');
+    gexpr(gfx(A).property("SQ Glass Tone").property(1), "-" + CL + '.effect("SQ Glass Darken")(1)');
     fxAdd(A, "ADBE Noise", "SQ Glass Grain FX");
-    gexpr(gfx(A).property("SQ Glass Grain FX").property(1), 'effect("SQ Glass Grain")(1)/12');
+    gexpr(gfx(A).property("SQ Glass Grain FX").property(1), CL + '.effect("SQ Glass Grain")(1)/12');
     try { gfx(A).property("SQ Glass Grain FX").property(2).setValue(0); } catch (e11) {}
     A.setTrackMatte(P, TrackMatteType.ALPHA);
 
-    var GL = 'thisComp.layer("' + q2(glassName) + '")';
+    var GL = CL;
     function overlay(srcComp, blend, opacityExpr) {
         var L = comp.layers.add(srcComp); L.name = srcComp.name;
         L.blendingMode = blend;
@@ -218,10 +239,34 @@ function glassOne(comp, S, o, folder) {
     gexpr(SH.property("ADBE Transform Group").property("ADBE Position"), "value + [0, " + SC + "*0.35]");
 
     P.enabled = false;
-    var all = [A, TI, SHD, INN, GLO, RM, CH, SH, P, MX, MY];
+    var all = [A, TI, SHD, INN, GLO, RM, CH, SH, P, MX, MY, C];
     for (var z = 0; z < all.length; z++) { try { all[z].inPoint = tin; all[z].outPoint = tout; } catch (e13) {} }
-    P.comment = "Squeezy Glass: " + base;
-    return A;
+    P.comment = "Squeezy Glass: double-click to edit the shape. Move it with " + ctlName;
+
+    // the shape follows the controller (everything else is built from the shape, so it all follows)
+    var CTW = 'comp("' + q2(comp.name) + '").layer("' + q2(ctlName) + '")';
+    var PV = shapeComp.layers.addNull();
+    PV.name = "SQ Glass Pivot";
+    PV.property("ADBE Transform Group").property("ADBE Position").setValue([ctr[0], ctr[1]]);
+    PV.enabled = false;
+    for (var q = 1; q <= shapeComp.numLayers; q++) {
+        var ch = shapeComp.layer(q);
+        if (ch.index === PV.index || ch.parent) continue;
+        ch.parent = PV;
+        gexpr(ch.property("ADBE Transform Group").property("ADBE Opacity"), "value * " + CTW + ".transform.opacity / 100");
+    }
+    var tg = PV.property("ADBE Transform Group");
+    gexpr(tg.property("ADBE Position"), "var C = " + CTW + ", p = C.toComp(C.transform.anchorPoint);\n[p[0], p[1]]");
+    gexpr(tg.property("ADBE Scale"), "var C = " + CTW + ", s = C.transform.scale;\n[s[0], s[1]]");
+    gexpr(tg.property("ADBE Rotate Z"), CTW + ".transform.rotation");
+    PV.locked = true;
+
+    C.moveToBeginning();
+    var helpers = [A, TI, SHD, INN, GLO, RM, CH, SH, MX, MY];
+    for (var h = 0; h < helpers.length; h++) { try { helpers[h].shy = true; helpers[h].label = 0; } catch (e14) {} try { helpers[h].locked = true; } catch (e15) {} }
+    try { P.label = 0; } catch (e16) {}
+    try { comp.hideShyLayers = true; } catch (e17) {}
+    return C;
 }
 
 function glassApply(o) {
@@ -249,7 +294,7 @@ function glassApply(o) {
     for (var a = 0; a < ls.length; a++) made.push(glassOne(comp, ls[a], o, folder));
     for (var b = 1; b <= comp.numLayers; b++) comp.layer(b).selected = false;
     for (var c = 0; c < made.length; c++) made[c].selected = true;
-    return "Liquid glass on " + made.length + " layer" + (made.length === 1 ? "" : "s") + ". Edit the shape inside its \"SQ Glass Shape\" comp";
+    return "Liquid glass on " + made.length + " layer" + (made.length === 1 ? "" : "s") + ". Move / scale / rotate the \"SQ Glass Controller\" layer";
 }
 
 function glassRemove() {
@@ -260,9 +305,23 @@ function glassRemove() {
         if (m) bases[m[1]] = 1;
     }
     for (var bb in bases) if (bases.hasOwnProperty(bb)) {
+        for (var u = 1; u <= comp.numLayers; u++) { var U = comp.layer(u); if (String(U.name).indexOf("SQ Glass") === 0) { try { U.locked = false; } catch (eu) {} } }
         for (var k = comp.numLayers; k >= 1; k--) {
             var L = comp.layer(k), nm = String(L.name);
-            if (nm === "SQ Glass Shape \u00B7 " + bb) { L.enabled = true; L.name = bb; L.comment = ""; continue; }
+            if (nm === "SQ Glass Shape \u00B7 " + bb) {
+                try {   // freeze the shape where the controller left it, then drop the pivot
+                    var sc = L.source, pv = null;
+                    for (var w = 1; w <= sc.numLayers; w++) if (sc.layer(w).name === "SQ Glass Pivot") pv = sc.layer(w);
+                    if (pv) {
+                        pv.locked = false;
+                        var ptg = pv.property("ADBE Transform Group"), keep = [["ADBE Position"], ["ADBE Scale"], ["ADBE Rotate Z"]];
+                        for (var e = 0; e < keep.length; e++) { var pr = ptg.property(keep[e][0]); var vv = pr.value; pr.expression = ""; pr.setValue(vv); }
+                        for (var w2 = 1; w2 <= sc.numLayers; w2++) { var kid = sc.layer(w2); if (kid.parent && kid.parent.index === pv.index) { kid.parent = null; try { kid.property("ADBE Transform Group").property("ADBE Opacity").expression = ""; } catch (eo) {} } }
+                        pv.remove();
+                    }
+                } catch (ep) {}
+                L.enabled = true; L.name = bb; L.comment = ""; L.shy = false; continue;
+            }
             if (nm.indexOf("SQ Glass") === 0 && nm.indexOf(" \u00B7 " + bb) === nm.length - (" \u00B7 " + bb).length) L.remove();
         }
         n++;

@@ -1,6 +1,6 @@
 {
   "id": "glass",
-  "version": 1,
+  "version": 2,
   "scriptFile": "glass.jsx",
-  "changes": "Dispersion fringe in After Effects"
+  "changes": "One Controller layer moves / scales / rotates / fades the whole glass and holds every control; helper layers are hidden and locked"
 }
