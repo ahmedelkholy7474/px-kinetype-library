@@ -1,6 +1,6 @@
 {
   "id": "glass",
-  "version": 5,
+  "version": 6,
   "scriptFile": "glass.jsx",
-  "changes": "Writes a diagnostics report to the Desktop after Apply"
+  "changes": "Fixed: glass disappeared (AE 2025 makes new nulls 0% opacity). Select the Controller and press Apply to repair"
 }

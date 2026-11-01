@@ -68,6 +68,7 @@ function glassOne(comp, S, o, folder) {
     var C = comp.layers.addNull();
     C.name = ctlName;
     C.label = 9;
+    try { C.property("ADBE Transform Group").property("ADBE Opacity").setValue(100); } catch (eop) {}
     try { C.property("ADBE Transform Group").property("ADBE Position").setValue([ctr[0], ctr[1]]); } catch (ep) { C.property("ADBE Transform Group").property("ADBE Position").setValue([ctr[0], ctr[1], 0]); }
     C.comment = "Squeezy Glass: move / scale / rotate / fade this layer. Look = Effect Controls. Edit the shape inside \"SQ Glass Shape \u00B7 " + base + "\".";
     for (var k = 0; k < GLASS_CTRL.length; k++) {
@@ -247,6 +248,7 @@ function glassOne(comp, S, o, folder) {
     // at rest the expressions return exactly the shape's own values, so nothing can jump or vanish
     var CTW = 'comp("' + q2(comp.name) + '").layer("' + q2(ctlName) + '")';
     var c0v = ctr; try { c0v = C.property("ADBE Transform Group").property("ADBE Position").value; } catch (ec0) {}
+    var c0op = 100; try { c0op = C.property("ADBE Transform Group").property("ADBE Opacity").value; } catch (ecop) {}
     var C0 = "[" + Number(c0v[0]).toFixed(3) + ", " + Number(c0v[1]).toFixed(3) + "]";
     for (var q = 1; q <= shapeComp.numLayers; q++) {
         var ch = shapeComp.layer(q), T = ch.property("ADBE Transform Group");
@@ -272,6 +274,7 @@ function glassOne(comp, S, o, folder) {
             "value.length > 2 ? [value[0] * s[0] / 100, value[1] * s[1] / 100, value[2]] : [value[0] * s[0] / 100, value[1] * s[1] / 100]; } catch (e) { value; }");
         gexpr(T.property("ADBE Rotate Z"), "try { value + " + CTW + ".transform.rotation; } catch (e) { value; }");
         gexpr(T.property("ADBE Opacity"), "try { value * " + CTW + ".transform.opacity / 100; } catch (e) { value; }");
+        if (c0op <= 0) { try { T.property("ADBE Opacity").expression = ""; } catch (eo2) {} }
     }
 
     C.moveToBeginning();
@@ -339,21 +342,20 @@ function glassApply(o) {
     if (!ls.length) {
         var n = 0;
         for (var j = 0; j < sel.length; j++) {
+            if (gstarts(sel[j].name, "SQ Glass Controller")) { try { var op = sel[j].property("ADBE Transform Group").property("ADBE Opacity"); if (op.numKeys === 0 && op.value === 0) op.setValue(100); } catch (eop2) {} }
             var fx = gfx(sel[j]); if (!fx) continue;
             for (var k = 0; k < GLASS_CTRL.length; k++) { var p = fx.property(GLASS_CTRL[k][0]); if (p && o[GLASS_CTRL[k][0]] !== undefined) { p.property(1).setValue(o[GLASS_CTRL[k][0]]); n++; } }
             var tp = fx.property(GLASS_TINT); if (tp && o[GLASS_TINT]) { try { tp.property(1).setValue(o[GLASS_TINT]); } catch (et) {} }
         }
         if (!n) throw new Error("Draw a shape (or select a text / shape layer) first.");
-        try { glassReport(comp, "update"); } catch (er2) {}
-        return "Glass look updated (report on Desktop)";
+        return "Glass look updated";
     }
     if (!ls[0].setTrackMatte) throw new Error("Squeezy Glass needs After Effects 2023 or newer.");
     var folder = sqFolder("Squeezy Glass"), made = [];
     for (var a = 0; a < ls.length; a++) made.push(glassOne(comp, ls[a], o, folder));
-    try { glassReport(comp, "after apply"); } catch (er) {}
     for (var b = 1; b <= comp.numLayers; b++) { try { comp.layer(b).selected = false; } catch (eb) {} }
     for (var c = 0; c < made.length; c++) { try { made[c].selected = true; } catch (ec) {} }
-    return "Liquid glass on " + made.length + " layer" + (made.length === 1 ? "" : "s") + ". Move / scale / rotate the \"SQ Glass Controller\" layer. Report saved on Desktop";
+    return "Liquid glass on " + made.length + " layer" + (made.length === 1 ? "" : "s") + ". Move / scale / rotate the \"SQ Glass Controller\" layer";
 }
 
 function glassRemove() {
