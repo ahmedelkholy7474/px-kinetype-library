@@ -1,5 +1,6 @@
 {
   "id": "glass",
   "version": 1,
-  "scriptFile": "glass.jsx"
+  "scriptFile": "glass.jsx",
+  "changes": "Dispersion fringe in After Effects"
 }

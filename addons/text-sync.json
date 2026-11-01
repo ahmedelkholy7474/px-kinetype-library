@@ -52,7 +52,7 @@
     },
     {
       "id": "highlight",
-      "label": "Highlight colour (empty = off)",
+      "label": "Highlight",
       "type": "text",
       "value": "#FFD23F"
     },
@@ -70,11 +70,12 @@
     },
     {
       "id": "perCaption",
-      "label": "Words per caption (0 = as file)",
+      "label": "Words / caption",
       "type": "slider",
       "min": 0,
       "max": 8,
-      "value": 0
+      "value": 0,
+      "unit": ""
     },
     {
       "id": "speed",
@@ -86,9 +87,10 @@
     },
     {
       "id": "font",
-      "label": "Font (PostScript name)",
+      "label": "Font",
       "type": "text",
-      "value": ""
+      "value": "",
+      "placeholder": "PostScript name, e.g. Cairo-Bold"
     },
     {
       "id": "size",
@@ -122,5 +124,6 @@
       ],
       "value": "Playhead"
     }
-  ]
+  ],
+  "changes": "Ready: SRT / VTT captions, word by word"
 }

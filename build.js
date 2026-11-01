@@ -42,7 +42,7 @@ var addons = fs.existsSync(addonDir) ? fs.readdirSync(addonDir).filter(function 
 var modDir = path.join(dir, "modules"), modules = {};
 if (fs.existsSync(modDir)) fs.readdirSync(modDir).filter(function (f) { return /\.json$/.test(f); }).forEach(function (f) {
   var m = JSON.parse(fs.readFileSync(path.join(modDir, f), "utf8"));
-  modules[m.id] = { version: m.version || 1, script: fs.readFileSync(path.join(modDir, m.scriptFile), "utf8") };
+  modules[m.id] = { version: m.version || 1, changes: m.changes || "", script: fs.readFileSync(path.join(modDir, m.scriptFile), "utf8") };
 });
 var lib = {
   name: "Squeezy Text Library",
