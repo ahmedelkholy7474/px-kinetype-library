@@ -1,10 +1,10 @@
 {
   "id": "cylinder-builder",
   "name": "Cylinder Builder",
-  "version": 2,
+  "version": 3,
   "order": 2,
   "status": "ready",
-  "description": "Select 2+ layers: they go on a rotating 3D cylinder, back layers blurred and faded. Radius, spin and blur live on a control null.",
+  "description": "Select 2+ layers: they go on a rotating 3D cylinder. The card facing the camera stays sharp; the rest blur, fade and darken by depth as it turns.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><ellipse cx=\"12\" cy=\"6\" rx=\"7\" ry=\"2.5\"/><path d=\"M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6\"/></svg>",
   "colors": [
     "#3A7BFF",
@@ -31,16 +31,32 @@
       "type": "slider",
       "min": -120,
       "max": 120,
-      "value": 20,
+      "value": 30,
       "unit": "°/s"
+    },
+    {
+      "id": "snap",
+      "label": "Snap card to card",
+      "type": "checkbox",
+      "value": false
+    },
+    {
+      "id": "hold",
+      "label": "Hold on each card",
+      "type": "slider",
+      "min": 0,
+      "max": 4,
+      "step": 0.1,
+      "value": 0.8,
+      "unit": "s"
     },
     {
       "id": "blur",
       "label": "Back blur",
       "type": "slider",
       "min": 0,
-      "max": 80,
-      "value": 20
+      "max": 120,
+      "value": 35
     },
     {
       "id": "minOpacity",
@@ -48,7 +64,24 @@
       "type": "slider",
       "min": 0,
       "max": 100,
-      "value": 35,
+      "value": 25,
+      "unit": "%"
+    },
+    {
+      "id": "darken",
+      "label": "Back darken",
+      "type": "slider",
+      "min": 0,
+      "max": 100,
+      "value": 40
+    },
+    {
+      "id": "focus",
+      "label": "Focus (front only)",
+      "type": "slider",
+      "min": 0,
+      "max": 100,
+      "value": 50,
       "unit": "%"
     },
     {
