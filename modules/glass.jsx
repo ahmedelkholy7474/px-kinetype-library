@@ -243,22 +243,36 @@ function glassOne(comp, S, o, folder) {
     for (var z = 0; z < all.length; z++) { try { all[z].inPoint = tin; all[z].outPoint = tout; } catch (e13) {} }
     P.comment = "Squeezy Glass: double-click to edit the shape. Move it with " + ctlName;
 
-    // the shape follows the controller (everything else is built from the shape, so it all follows)
+    // the shape follows the controller by DELTA from where the controller started:
+    // at rest the expressions return exactly the shape's own values, so nothing can jump or vanish
     var CTW = 'comp("' + q2(comp.name) + '").layer("' + q2(ctlName) + '")';
-    var PV = shapeComp.layers.addNull();
-    PV.name = "SQ Glass Pivot";
-    PV.property("ADBE Transform Group").property("ADBE Position").setValue([ctr[0], ctr[1]]);
-    PV.enabled = false;
+    var c0v = ctr; try { c0v = C.property("ADBE Transform Group").property("ADBE Position").value; } catch (ec0) {}
+    var C0 = "[" + Number(c0v[0]).toFixed(3) + ", " + Number(c0v[1]).toFixed(3) + "]";
     for (var q = 1; q <= shapeComp.numLayers; q++) {
-        var ch = shapeComp.layer(q);
-        if (ch.index === PV.index || ch.parent) continue;
-        ch.parent = PV;
-        gexpr(ch.property("ADBE Transform Group").property("ADBE Opacity"), "try { value * " + CTW + ".transform.opacity / 100; } catch (e) { value; }");
+        var ch = shapeComp.layer(q), T = ch.property("ADBE Transform Group");
+        if (ch.parent) continue;
+        // pivot at the shape's centre (only when anchor / position are not animated)
+        try {
+            var ap = T.property("ADBE Anchor Point"), ps = T.property("ADBE Position");
+            if (ap.numKeys === 0 && ps.numKeys === 0 && !ps.dimensionsSeparated) {
+                var rr = ch.sourceRectAtTime(comp.time, false), av = ap.value, pv = ps.value;
+                var cxl = rr.left + rr.width / 2, cyl = rr.top + rr.height / 2;
+                var sc0 = T.property("ADBE Scale").value, ro = 0; try { ro = T.property("ADBE Rotate Z").value * Math.PI / 180; } catch (er) {}
+                var dx = (cxl - av[0]) * sc0[0] / 100, dy = (cyl - av[1]) * sc0[1] / 100;
+                var nx = pv[0] + dx * Math.cos(ro) - dy * Math.sin(ro), ny = pv[1] + dx * Math.sin(ro) + dy * Math.cos(ro);
+                if (isFinite(nx) && isFinite(ny) && isFinite(cxl) && isFinite(cyl)) {
+                    ap.setValue(av.length > 2 ? [cxl, cyl, av[2]] : [cxl, cyl]);
+                    ps.setValue(pv.length > 2 ? [nx, ny, pv[2]] : [nx, ny]);
+                }
+            }
+        } catch (ec) {}
+        gexpr(T.property("ADBE Position"), "try { var c = " + CTW + ".transform.position, d = [c[0] - " + C0 + "[0], c[1] - " + C0 + "[1]];\n" +
+            "value.length > 2 ? [value[0] + d[0], value[1] + d[1], value[2]] : [value[0] + d[0], value[1] + d[1]]; } catch (e) { value; }");
+        gexpr(T.property("ADBE Scale"), "try { var s = " + CTW + ".transform.scale;\n" +
+            "value.length > 2 ? [value[0] * s[0] / 100, value[1] * s[1] / 100, value[2]] : [value[0] * s[0] / 100, value[1] * s[1] / 100]; } catch (e) { value; }");
+        gexpr(T.property("ADBE Rotate Z"), "try { value + " + CTW + ".transform.rotation; } catch (e) { value; }");
+        gexpr(T.property("ADBE Opacity"), "try { value * " + CTW + ".transform.opacity / 100; } catch (e) { value; }");
     }
-    var tg = PV.property("ADBE Transform Group");
-    gexpr(tg.property("ADBE Position"), "try { var c = " + CTW + ".transform.position; [c[0], c[1]]; } catch (e) { value; }");
-    gexpr(tg.property("ADBE Scale"), "try { var s = " + CTW + ".transform.scale; [s[0], s[1]]; } catch (e) { value; }");
-    gexpr(tg.property("ADBE Rotate Z"), "try { " + CTW + ".transform.rotation; } catch (e) { value; }");
 
     C.moveToBeginning();
     var helpers = [A, TI, SHD, INN, GLO, RM, CH, SH, MX, MY];
@@ -308,15 +322,18 @@ function glassRemove() {
         for (var k = comp.numLayers; k >= 1; k--) {
             var L = comp.layer(k), nm = String(L.name);
             if (nm === "SQ Glass Shape \u00B7 " + bb) {
-                try {   // freeze the shape where the controller left it, then drop the pivot
-                    var sc = L.source, pv = null;
-                    for (var w = 1; w <= sc.numLayers; w++) if (sc.layer(w).name === "SQ Glass Pivot") pv = sc.layer(w);
-                    if (pv) {
-                        pv.locked = false;
-                        var ptg = pv.property("ADBE Transform Group"), keep = [["ADBE Position"], ["ADBE Scale"], ["ADBE Rotate Z"]];
-                        for (var e = 0; e < keep.length; e++) { var pr = ptg.property(keep[e][0]); var vv = pr.value; pr.expression = ""; pr.setValue(vv); }
-                        for (var w2 = 1; w2 <= sc.numLayers; w2++) { var kid = sc.layer(w2); if (kid.parent && kid.parent.index === pv.index) { kid.parent = null; try { kid.property("ADBE Transform Group").property("ADBE Opacity").expression = ""; } catch (eo) {} } }
-                        pv.remove();
+                try {   // freeze the shape where the controller left it
+                    var sc = L.source;
+                    for (var w = 1; w <= sc.numLayers; w++) {
+                        var kid = sc.layer(w), kt = kid.property("ADBE Transform Group");
+                        if (kid.name === "SQ Glass Pivot") { kid.remove(); w--; continue; }   // rigs from v2
+                        var keep = ["ADBE Position", "ADBE Scale", "ADBE Rotate Z", "ADBE Opacity"];
+                        for (var e = 0; e < keep.length; e++) {
+                            var pr = kt.property(keep[e]);
+                            if (pr && pr.expression && pr.expression.indexOf("SQ Glass Controller") >= 0) {
+                                var vv = pr.value; pr.expression = ""; if (pr.numKeys === 0) pr.setValue(vv);
+                            }
+                        }
                     }
                 } catch (ep) {}
                 L.enabled = true; L.name = bb; L.comment = ""; L.shy = false; continue;

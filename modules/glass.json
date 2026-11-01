@@ -1,6 +1,6 @@
 {
   "id": "glass",
-  "version": 3,
+  "version": 4,
   "scriptFile": "glass.jsx",
-  "changes": "Controller rig made fail-safe: the glass always renders"
+  "changes": "Controller rebuilt: the shape follows it by offset, so it never jumps or disappears"
 }
