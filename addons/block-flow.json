@@ -1,7 +1,7 @@
 {
   "id": "block-flow",
   "name": "Block Flow",
-  "version": 4,
+  "version": 5,
   "order": 3,
   "status": "ready",
   "description": "Works with one image or many: cards side by side, overlapping, each new image takes its slot through a grid-block glitch while the frame steps down in scale. Select layers in your comp, or images in the Project panel.",

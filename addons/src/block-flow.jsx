@@ -348,15 +348,26 @@ function getProjectItems() {
 // selected layers in a comp → their sources. Layers without a usable source
 // (text, shape, solid…) are precomposed first. Returns items + the layers to hide
 // + the top-most layer (new cards are stacked right above it).
-function resolveLayers(comp, reverse) {
-    var sel = comp.selectedLayers, arr = [], i;
+// layer filter without instanceof (more reliable when run from the Squeezy panel)
+function cardSkipReason(L) {
+    try { if (L.property("ADBE Camera Options Group")) { return "camera"; } } catch (e1) {}
+    try { if (L.property("ADBE Light Options Group")) { return "light"; } } catch (e2) {}
+    try { if (L.nullLayer) { return "null"; } } catch (e3) {}
+    try { if (L.adjustmentLayer) { return "adjustment layer"; } } catch (e4) {}
+    try { if (!L.property("ADBE Transform Group")) { return "no transform"; } } catch (e5) { return "unreadable"; }
+    return "";
+}
+
+function resolveLayers(comp, reverse, given) {
+    var sel = (given && given.length) ? given : comp.selectedLayers, arr = [], i, skipped = [];
     for (i = 0; i < sel.length; i++) { arr.push(sel[i]); }
     arr.sort(function (a, b) { return a.index - b.index; });
     if (reverse) { arr.reverse(); }
     var items = [], layers = [];
     for (i = 0; i < arr.length; i++) {
         var L = arr[i];
-        if (!(L instanceof AVLayer) || L.nullLayer || L.adjustmentLayer) { continue; } // cameras, lights, nulls…
+        var why = cardSkipReason(L);
+        if (why) { skipped.push(L.name + " (" + why + ")"); continue; }
         if (!(L.source && isUsableSource(L.source))) {
             var idx = L.index, nm = L.name;
             comp.layers.precompose([idx], "BF src – " + nm, true);
@@ -366,7 +377,7 @@ function resolveLayers(comp, reverse) {
         items.push(L.source);
         layers.push(L);
     }
-    if (!layers.length) { throw new Error("None of the selected layers can be used (cameras, lights, nulls and adjustment layers are skipped)."); }
+    if (!layers.length) { throw new Error("None of the selected layers can be used: " + (skipped.length ? skipped.join(", ") : "nothing selected")); }
     var top = layers[0];
     for (i = 1; i < layers.length; i++) { if (layers[i].index < top.index) { top = layers[i]; } }
     return { items: items, layers: layers, top: top };
@@ -643,7 +654,7 @@ o.inPlace = null;
 
 var t0 = new Date().getTime();
 if (layerMode) {
-    var res = resolveLayers(target, o.reverseOrder);
+    var res = resolveLayers(target, o.reverseOrder, layers);
     items = res.items;
     o.inPlace = { comp: target, layers: res.layers, top: res.top };
 }
