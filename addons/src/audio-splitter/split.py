@@ -20,13 +20,28 @@ ROFORMER = "model_bs_roformer_ep_317_sdr_12.9755.ckpt"
 OUT = None
 
 
-def progress(stage, pct, msg=""):
+LAST = {}
+
+
+def heartbeat():
+    """Re-stamp progress.json every 15 s, so the panel can tell 'slow' from 'stopped'."""
+    import threading
+    def run():
+        while True:
+            time.sleep(15)
+            if LAST and LAST.get("pct", 0) < 100:
+                progress(LAST["stage"], LAST["pct"], LAST["msg"], beat=True)
+    threading.Thread(target=run, daemon=True).start()
+
+
+def progress(stage, pct, msg="", beat=False):
+    if not beat: LAST.update(stage=stage, pct=pct, msg=msg)
     if not OUT: print(stage, pct, msg, flush=True); return
     tmp = os.path.join(OUT, "progress.tmp")
     with open(tmp, "w") as f:
-        json.dump({"stage": stage, "pct": round(pct, 1), "msg": msg, "time": time.time()}, f)
+        json.dump({"stage": stage, "pct": round(pct, 1), "msg": msg, "time": time.time(), "pid": os.getpid()}, f)
     os.replace(tmp, os.path.join(OUT, "progress.json"))
-    print(stage, pct, msg, flush=True)
+    if not beat: print(stage, pct, msg, flush=True)
 
 
 def ensure_ffmpeg():
@@ -131,37 +146,42 @@ def load_tiger(random_weights=False):
     return model
 
 
-def run_tiger(model, x, base_pct, span, label, stereo=False, hop=6.0):
+def run_tiger(model, x, base_pct, span, label, stereo=False, hop=None):
     """x: [T, 2] float32 -> dict dialog/effect/music, each [T, 2].
-    The network is mono: by default the mid channel goes through once (twice as fast),
-    stereo=True runs left and right separately. hop = seconds between 12 s windows (smaller = smoother, slower)."""
+    TIGER is mono: by default the mid channel goes through once (twice as fast), stereo=True does L and R.
+    Runs on the CPU (the Apple GPU path falls back op by op and can stall), in 12 s windows
+    that overlap by 1 s and are cross-faded. Progress is reported after every window."""
     import numpy as np, torch
     try: torch.set_num_threads(max(1, os.cpu_count() or 1))
     except Exception: pass
-    dev = device()
-    try:
-        model.to(dev)
-    except Exception:
-        dev = torch.device("cpu"); model.to(dev)
-    model.eval()
+    dev = torch.device("cpu")
+    model.to(dev).eval()
     chans = [x[:, 0], x[:, 1]] if stereo else [x.mean(1)]
     nets = (("dialog", model.dialog, 2), ("effect", model.effect, 1), ("music", model.music, 0))
+    T = x.shape[0]; win = 12 * SR; ov = SR; step = win - ov
+    nwin = max(1, int(np.ceil(max(T - ov, 1) / step)))
+    total = len(chans) * len(nets) * nwin; done = 0; t0 = time.time()
+    fade = np.linspace(0, 1, ov, dtype=np.float32)
     outs = {"dialog": [], "effect": [], "music": []}
-    steps = len(chans) * 3; k = 0
     for c, ch in enumerate(chans):
-        t = torch.from_numpy(np.ascontiguousarray(ch)).float().to(dev)[None, None, :]   # [1, 1, T]
         for key, net, idx in nets:
-            progress(label, base_pct + span * k / steps, key + (" (%s)" % ("left", "right")[c] if stereo else "")); k += 1
-            with torch.no_grad():
-                try:
-                    y = model.wav_chunk_inference(net, t, target_length=12.0, hop_length=hop)[idx]
-                except Exception:
-                    if dev.type == "cpu": raise
-                    model.to("cpu"); dev = torch.device("cpu"); t = t.cpu()
-                    y = model.wav_chunk_inference(net, t, target_length=12.0, hop_length=hop)[idx]
-            v = y.detach().float().cpu().numpy().reshape(-1)[: x.shape[0]]
-            if v.shape[0] < x.shape[0]: v = np.pad(v, (0, x.shape[0] - v.shape[0]))
-            outs[key].append(v)
+            acc = np.zeros(T, np.float32); wsum = np.zeros(T, np.float32)
+            for i in range(nwin):
+                s0 = i * step; seg = ch[s0:s0 + win]; L = len(seg)
+                if L <= 0: break
+                buf = np.zeros(win, np.float32); buf[:L] = seg
+                with torch.no_grad():
+                    y = net(torch.from_numpy(buf)[None, None, :])
+                y = y.reshape(y.shape[0], -1, y.shape[-1])[0, idx].float().numpy()[:L]
+                w = np.ones(L, np.float32)
+                if i > 0: w[:min(ov, L)] = fade[:min(ov, L)]
+                if s0 + win < T: w[-ov:] = np.minimum(w[-ov:], fade[::-1][-min(ov, L):])
+                acc[s0:s0 + L] += y * w; wsum[s0:s0 + L] += w
+                done += 1
+                el = time.time() - t0; left = el / done * (total - done)
+                progress(label, base_pct + span * done / total,
+                         "%s%s, part %d/%d, about %d min left" % (key, (" L", " R")[c] if stereo else "", i + 1, nwin, max(1, round(left / 60))))
+            outs[key].append(acc / np.maximum(wsum, 1e-6))
     if not stereo:
         return {k2: np.stack([v[0], v[0]], 1).astype("float32") for k2, v in outs.items()}
     return {k2: np.stack(v, 1).astype("float32") for k2, v in outs.items()}
@@ -198,12 +218,12 @@ def split(src, out, quality, test_random=False, stereo=False):
         vocals, inst = run_roformer(mix_wav, work)
         L = min(n, vocals.shape[0], inst.shape[0])
         vocals, inst = vocals[:L], inst[:L]
-        st = run_tiger(tiger, inst, 45, 50, "Splitting music / SFX", stereo, 6.0)
+        st = run_tiger(tiger, inst, 45, 50, "Splitting music / SFX", stereo)
         music, sfx = st["music"][:L], st["effect"][:L]
         # speech the vocal model left behind lands back with the vocals
         vocals = vocals + st["dialog"][:L] * 0.5
     else:
-        st = run_tiger(tiger, mix, 10, 85, "Splitting vocals / music / SFX", stereo, 12.0 if quality == "fast" else 6.0)
+        st = run_tiger(tiger, mix, 10, 85, "Splitting vocals / music / SFX", stereo)
         vocals, music, sfx = st["dialog"], st["music"], st["effect"]
     progress("Writing stems", 96)
     name = os.path.splitext(os.path.basename(src))[0]
@@ -259,6 +279,7 @@ if __name__ == "__main__":
         for f in ("done.json", "error.txt"):
             try: os.remove(os.path.join(OUT, f))
             except OSError: pass
+        heartbeat()
         split(os.path.abspath(a.src), os.path.abspath(a.out), a.quality, a.test_random, a.stereo)
     except Exception as e:
         with open(os.path.join(OUT, "error.txt"), "w") as f:

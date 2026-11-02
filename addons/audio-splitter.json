@@ -1,11 +1,11 @@
 {
   "id": "audio-splitter",
   "name": "Audio Splitter",
-  "version": 3,
+  "version": 4,
   "order": 6,
   "status": "ready",
   "requires": "2.0",
-  "changes": "Setup fix: ffmpeg is now provided for the vocal model",
+  "changes": "Faster, live progress with time left, detects a stopped split",
   "description": "Split a video or audio layer into Vocals, Music and SFX stems with AI, right inside AE. First run installs a local engine (one time, about 2 GB).",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\"><path d=\"M3 12h3l2-5 3 10 2-6 1.5 3H16\"/><path d=\"M16 12h5M16 12l4-5h1M16 12l4 5h1\"/></svg>",
   "colors": [

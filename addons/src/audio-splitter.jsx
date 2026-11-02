@@ -101,11 +101,29 @@ if (errTxt && !again) {
     var first = errTxt.split("\n")[0];
     throw new Error("Split failed: " + first + "  (details in " + OUTDIR + SEP + "error.txt, choose Split again to retry)");
 }
-// still running: report progress
-if (progTxt && !again) {
-    var pr = asJSON(progTxt);
-    var fresh = pr && pr.time && ((new Date()).getTime() / 1000 - pr.time) < 300;
-    if (pr && fresh && pr.pct < 100) return "Splitting… " + Math.round(pr.pct) + "% · " + pr.stage + (pr.msg ? " (" + pr.msg + ")" : "") + ". Press Split again to check.";
+function pidAlive(pid) {
+    if (!pid) return false;
+    try {
+        if (isWin) return String(system.callSystem('tasklist /FI "PID eq ' + pid + '" /NH')).indexOf(String(pid)) >= 0;
+        return String(system.callSystem("kill -0 " + pid + " 2>/dev/null && echo alive")).indexOf("alive") >= 0;
+    } catch (e) { return false; }
+}
+function logTail() {
+    var t = (asRead(OUTDIR + SEP + "log.txt") || "").replace(/\r/g, "").split("\n"), keep = [];
+    for (var z = t.length - 1; z >= 0 && keep.length < 3; z--) if (t[z].replace(/\s/g, "") && !/Warning|^\[/.test(t[z])) keep.unshift(t[z]);
+    return keep.join(" | ").substring(0, 300);
+}
+var pr = progTxt ? asJSON(progTxt) : null;
+// still running: report progress (the engine re-stamps the file every 15 s)
+if (pr && pr.pct < 100 && !again) {
+    var age = (new Date()).getTime() / 1000 - (pr.time || 0);
+    if (age < 90) return "Splitting\u2026 " + Math.round(pr.pct) + "% \u00B7 " + pr.stage + (pr.msg ? " (" + pr.msg + ")" : "") + ". Press Split again to check.";
+    if (pidAlive(pr.pid)) return "Still working at " + Math.round(pr.pct) + "% (" + pr.stage + "), the computer is busy. Press Split again in a minute.";
+    throw new Error("The split stopped at " + Math.round(pr.pct) + "% (" + pr.stage + "). " + (logTail() || "No details.") + "  Choose Split again to restart.");
+}
+// a restart: stop the old engine first
+if (again && pr && pr.pct < 100 && pidAlive(pr.pid)) {
+    try { system.callSystem(isWin ? "taskkill /PID " + pr.pid + " /F" : "kill " + pr.pid); } catch (ek) {}
 }
 
 // ---------- start a new split in the background ----------
