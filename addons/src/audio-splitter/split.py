@@ -73,12 +73,40 @@ def device():
 
 
 # ---------------- TIGER-DnR: dialog / effects / music ----------------
+def hub_file(repo, name):
+    """Download one file from Hugging Face (3 tries), cached in the models folder."""
+    from huggingface_hub import hf_hub_download
+    last = None
+    for attempt in range(3):
+        try:
+            return hf_hub_download(repo, name, cache_dir=MODELS)
+        except Exception as e:
+            last = e; time.sleep(2 + attempt * 3)
+    raise RuntimeError("Could not download %s/%s: %s" % (repo, name, last))
+
+
 def load_tiger(random_weights=False):
     sys.path.insert(0, os.path.join(HERE, "TIGER"))
-    import look2hear.models
+    import inspect, look2hear.models
+    TD = look2hear.models.TIGERDNR
     if random_weights:   # test hook: same network, untrained
-        return look2hear.models.TIGERDNR()
-    return look2hear.models.TIGERDNR.from_pretrained("JusperLee/TIGER-DnR", cache_dir=MODELS)
+        return TD()
+    # load the weights directly (independent of the huggingface_hub mixin version)
+    cfg = {}
+    try:
+        with open(hub_file("JusperLee/TIGER-DnR", "config.json")) as f: cfg = json.load(f)
+    except Exception:
+        cfg = {}
+    names = inspect.signature(TD.__init__).parameters
+    model = TD(**{k: v for k, v in cfg.items() if k in names})
+    wpath = hub_file("JusperLee/TIGER-DnR", "model.safetensors")
+    from safetensors.torch import load_file
+    sd = load_file(wpath)
+    res = model.load_state_dict(sd, strict=False)
+    missing = list(getattr(res, "missing_keys", []))
+    if len(missing) > max(5, 0.05 * len(sd)):
+        raise RuntimeError("TIGER-DnR weights do not match the network (%d missing keys, e.g. %s)" % (len(missing), missing[:3]))
+    return model
 
 
 def run_tiger(model, x, base_pct, span, label, stereo=False, hop=6.0):
@@ -170,12 +198,24 @@ def split(src, out, quality, test_random=False, stereo=False):
 
 
 def warmup():
-    progress("Downloading TIGER-DnR", 10)
-    load_tiger()
-    progress("Downloading BS-RoFormer", 50)
-    from audio_separator.separator import Separator
-    Separator(model_file_dir=MODELS, output_dir=MODELS).download_model_files(ROFORMER) if hasattr(Separator, "download_model_files") else Separator(model_file_dir=MODELS, output_dir=MODELS).load_model(model_filename=ROFORMER)
-    progress("Models ready", 100)
+    """Download both models once. Every step is logged to warmup-log.txt."""
+    log = open(os.path.join(HERE, "warmup-log.txt"), "w")
+    def say(m): print(m, flush=True); log.write(m + "\n"); log.flush()
+    ok = True
+    try:
+        say("1/2  TIGER-DnR (music / SFX / dialog)...")
+        load_tiger(); say("     ok")
+    except Exception:
+        ok = False; say("     FAILED\n" + traceback.format_exc())
+    try:
+        say("2/2  BS-RoFormer (vocals)...")
+        from audio_separator.separator import Separator
+        sep = Separator(model_file_dir=MODELS, output_dir=MODELS)
+        sep.load_model(model_filename=ROFORMER); say("     ok")
+    except Exception:
+        ok = False; say("     FAILED\n" + traceback.format_exc())
+    log.close()
+    return ok
 
 
 if __name__ == "__main__":
@@ -188,7 +228,7 @@ if __name__ == "__main__":
     ap.add_argument("--stereo", action="store_true")
     a = ap.parse_args()
     if a.warmup:
-        warmup(); sys.exit(0)
+        sys.exit(0 if warmup() else 1)
     OUT = a.out
     try:
         os.makedirs(OUT, exist_ok=True)

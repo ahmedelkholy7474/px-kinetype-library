@@ -11,21 +11,27 @@ echo ==================================================
 set "PATH=%USERPROFILE%\.local\bin;%PATH%"
 where uv >nul 2>nul || powershell -ExecutionPolicy ByPass -NoProfile -Command "irm https://astral.sh/uv/install.ps1 | iex" || goto fail
 set "PATH=%USERPROFILE%\.local\bin;%PATH%"
-if exist "%DIR%venv" rmdir /s /q "%DIR%venv"
-uv venv --python 3.11 "%DIR%venv" || goto fail
-uv pip install --python "%DIR%venv\Scripts\python.exe" torch torchaudio librosa soundfile huggingface_hub imageio-ffmpeg torch-complex typeguard rich pytorch_lightning "audio-separator[cpu]" setuptools || goto fail
+if not exist "%DIR%venv\Scripts\python.exe" uv venv --python 3.11 "%DIR%venv" || goto fail
+uv pip install --python "%DIR%venv\Scripts\python.exe" torch torchaudio librosa soundfile huggingface_hub imageio-ffmpeg safetensors torch-complex typeguard rich pytorch_lightning "audio-separator[cpu]" setuptools || goto fail
+if exist "%DIR%TIGER\look2hear" goto models
 powershell -NoProfile -Command "Invoke-WebRequest -UseBasicParsing https://github.com/JusperLee/TIGER/archive/refs/heads/main.zip -OutFile '%DIR%tiger.zip'" || goto fail
 if exist "%DIR%TIGER" rmdir /s /q "%DIR%TIGER"
 if exist "%DIR%TIGER-main" rmdir /s /q "%DIR%TIGER-main"
 powershell -NoProfile -Command "Expand-Archive -Force '%DIR%tiger.zip' '%DIR%'" || goto fail
 ren "%DIR%TIGER-main" TIGER || goto fail
 del "%DIR%tiger.zip"
-"%DIR%venv\Scripts\python.exe" "%DIR%split.py" --warmup || goto fail
+:models
+echo Downloading the AI models...
+"%DIR%venv\Scripts\python.exe" "%DIR%split.py" --warmup || goto failm
 echo ok> "%DIR%installed.txt"
 echo.
 echo Done! Go back to After Effects, select your layer and press Split.
 pause
 exit /b 0
+:failm
+echo.
+echo ---- details ----
+type "%DIR%warmup-log.txt"
 :fail
 echo.
 echo Setup failed. Send a screenshot of this window to Claude.
