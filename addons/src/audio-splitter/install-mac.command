@@ -16,7 +16,7 @@ fi
 if [ ! -x "$DIR/venv/bin/python" ]; then
   uv venv --python 3.11 "$DIR/venv" || fail "could not create the Python environment"
 fi
-uv pip install --python "$DIR/venv/bin/python" torch torchaudio librosa soundfile huggingface_hub imageio-ffmpeg \
+uv pip install --python "$DIR/venv/bin/python" torch torchaudio librosa soundfile huggingface_hub imageio-ffmpeg static-ffmpeg \
   safetensors torch-complex typeguard rich pytorch_lightning "audio-separator[cpu]" setuptools || fail "could not install the Python packages"
 if [ ! -d "$DIR/TIGER/look2hear" ]; then
   curl -L -o "$DIR/tiger.zip" https://github.com/JusperLee/TIGER/archive/refs/heads/main.zip || fail "could not download TIGER"

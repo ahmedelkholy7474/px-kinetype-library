@@ -12,7 +12,7 @@ set "PATH=%USERPROFILE%\.local\bin;%PATH%"
 where uv >nul 2>nul || powershell -ExecutionPolicy ByPass -NoProfile -Command "irm https://astral.sh/uv/install.ps1 | iex" || goto fail
 set "PATH=%USERPROFILE%\.local\bin;%PATH%"
 if not exist "%DIR%venv\Scripts\python.exe" uv venv --python 3.11 "%DIR%venv" || goto fail
-uv pip install --python "%DIR%venv\Scripts\python.exe" torch torchaudio librosa soundfile huggingface_hub imageio-ffmpeg safetensors torch-complex typeguard rich pytorch_lightning "audio-separator[cpu]" setuptools || goto fail
+uv pip install --python "%DIR%venv\Scripts\python.exe" torch torchaudio librosa soundfile huggingface_hub imageio-ffmpeg static-ffmpeg safetensors torch-complex typeguard rich pytorch_lightning "audio-separator[cpu]" setuptools || goto fail
 if exist "%DIR%TIGER\look2hear" goto models
 powershell -NoProfile -Command "Invoke-WebRequest -UseBasicParsing https://github.com/JusperLee/TIGER/archive/refs/heads/main.zip -OutFile '%DIR%tiger.zip'" || goto fail
 if exist "%DIR%TIGER" rmdir /s /q "%DIR%TIGER"

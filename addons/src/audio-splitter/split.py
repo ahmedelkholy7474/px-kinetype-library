@@ -29,6 +29,28 @@ def progress(stage, pct, msg=""):
     print(stage, pct, msg, flush=True)
 
 
+def ensure_ffmpeg():
+    """The vocal model calls `ffmpeg` / `ffprobe` by name: make sure both are on PATH."""
+    if shutil.which("ffmpeg") and shutil.which("ffprobe"): return
+    try:
+        import static_ffmpeg   # downloads ffmpeg + ffprobe once, then just adds them to PATH
+        static_ffmpeg.add_paths()
+        if shutil.which("ffmpeg"): return
+    except Exception:
+        pass
+    try:   # fall back to the ffmpeg that ships with imageio-ffmpeg
+        import imageio_ffmpeg
+        exe = imageio_ffmpeg.get_ffmpeg_exe()
+        bindir = os.path.join(HERE, "bin"); os.makedirs(bindir, exist_ok=True)
+        link = os.path.join(bindir, "ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+        if not os.path.exists(link):
+            try: os.symlink(exe, link)
+            except Exception: shutil.copy2(exe, link)
+        os.environ["PATH"] = bindir + os.pathsep + os.environ.get("PATH", "")
+    except Exception:
+        pass
+
+
 def ffmpeg_bin():
     try:
         import imageio_ffmpeg
@@ -147,6 +169,7 @@ def run_tiger(model, x, base_pct, span, label, stereo=False, hop=6.0):
 
 # ---------------- BS-RoFormer: vocals / instrumental ----------------
 def run_roformer(wav, work):
+    ensure_ffmpeg()
     from audio_separator.separator import Separator
     sep = Separator(model_file_dir=MODELS, output_dir=work, output_format="WAV")
     sep.load_model(model_filename=ROFORMER)
@@ -209,6 +232,7 @@ def warmup():
         ok = False; say("     FAILED\n" + traceback.format_exc())
     try:
         say("2/2  BS-RoFormer (vocals)...")
+        ensure_ffmpeg()
         from audio_separator.separator import Separator
         sep = Separator(model_file_dir=MODELS, output_dir=MODELS)
         sep.load_model(model_filename=ROFORMER); say("     ok")
