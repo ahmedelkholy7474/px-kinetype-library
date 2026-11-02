@@ -1,11 +1,11 @@
 {
   "id": "proximity",
   "name": "Squeezy Proximity",
-  "version": 1,
+  "version": 2,
   "order": 5,
   "status": "ready",
   "requires": "2.0",
-  "description": "Layers react to how close an effector is: scale, opacity, rotation, push / pull, Z lift, blur and tint, with radius, soft falloff and multiple effectors. Everything stays live on one controller.",
+  "description": "Layers react to how close an effector is: scale, opacity, rotation, push / pull, Z lift, blur and tint. Every property has an ON checkbox and a slider on one controller, so you can switch them live in Effect Controls.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"2.5\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"6\" opacity=\".6\"/><circle cx=\"12\" cy=\"12\" r=\"9.5\" opacity=\".3\"/></svg>",
   "colors": [
     "#7B5CFF",
@@ -49,7 +49,7 @@
     },
     {
       "id": "scale",
-      "label": "Scale",
+      "label": "Scale (starts ON)",
       "type": "checkbox",
       "value": true
     },
@@ -64,7 +64,7 @@
     },
     {
       "id": "opacity",
-      "label": "Opacity",
+      "label": "Opacity (starts ON)",
       "type": "checkbox",
       "value": false
     },
@@ -79,7 +79,7 @@
     },
     {
       "id": "rotation",
-      "label": "Rotation",
+      "label": "Rotation (starts ON)",
       "type": "checkbox",
       "value": false
     },
@@ -94,7 +94,7 @@
     },
     {
       "id": "push",
-      "label": "Push / pull",
+      "label": "Push / pull (starts ON)",
       "type": "checkbox",
       "value": false
     },
@@ -109,7 +109,7 @@
     },
     {
       "id": "lift",
-      "label": "Lift in Z (3D layers)",
+      "label": "Lift in Z (3D layers) (starts ON)",
       "type": "checkbox",
       "value": false
     },
@@ -124,7 +124,7 @@
     },
     {
       "id": "blur",
-      "label": "Blur",
+      "label": "Blur (starts ON)",
       "type": "checkbox",
       "value": false
     },
@@ -139,7 +139,7 @@
     },
     {
       "id": "tint",
-      "label": "Tint",
+      "label": "Tint (starts ON)",
       "type": "checkbox",
       "value": false
     },

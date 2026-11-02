@@ -49,7 +49,7 @@ function core(X) {
 var X_WEIGHT = MARK + " weight\nvar __r=0;\ntry{\n" + core("transform.position.value") + "\n__r=W*100;\n}catch(err){ __r=0; }\n__r";
 // push / lift live on the Anchor Point so Position stays untouched (no feedback into the distance)
 var X_POS = MARK + " push\nvar __r=value;\ntry{\n" + core("transform.position.value") +
-    '\nvar A=cv("Push")*W, Z=cv("Lift Z")*W;' +
+    '\nvar A=cv("Push ON")*cv("Push")*W, Z=cv("Lift Z ON")*cv("Lift Z")*W;' +
     '\nvar ox=DX*A, oy=DY*A;' +
     '\nif(hasParent){ var a0=parent.fromWorld(ME), a1=parent.fromWorld([ME[0]+ox,ME[1]+oy,ME[2]]); ox=a1[0]-a0[0]; oy=a1[1]-a0[1]; }' +
     '\nvar sc=transform.scale.value, rr=-transform.rotation.value*Math.PI/180;' +
@@ -61,14 +61,31 @@ function wrap(tag, body) {
     return MARK + " " + tag + "\nvar __r=value;\ntry{\n" + CR +
         'var W=effect("SQ Prox Weight")(1).value/100;\n' + body + "\n}catch(err){ __r=value; }\n__r";
 }
-var X_SCALE = wrap("scale", '__r=mul(value, Math.max(0, 1+cv("Scale")/100*W));');
-var X_OPAC = wrap("opacity", '__r=clamp(value+W*cv("Opacity"),0,100);');
-var X_ROT = wrap("rotation", '__r=value+W*cv("Rotation");');
-var X_BLUR = wrap("blur", '__r=Math.max(0,W*cv("Blur"));');
-var X_TINTA = wrap("tint", '__r=clamp(W*cv("Tint Amount"),0,100);');
+var X_SCALE = wrap("scale", '__r=mul(value, Math.max(0, 1+cv("Scale ON")*cv("Scale")/100*W));');
+var X_OPAC = wrap("opacity", '__r=clamp(value+W*cv("Opacity ON")*cv("Opacity"),0,100);');
+var X_ROT = wrap("rotation", '__r=value+W*cv("Rotation ON")*cv("Rotation");');
+var X_BLUR = wrap("blur", '__r=Math.max(0,W*cv("Blur ON")*cv("Blur"));');
+var X_TINTA = wrap("tint", '__r=clamp(W*cv("Tint ON")*cv("Tint Amount"),0,100);');
 var X_TINTC = MARK + ' tint colour\nvar __r=value;\ntry{ __r=thisComp.layer("' + q(CTRL) + '").effect("Tint Color")(1).value; }catch(err){ __r=value; }\n__r';
 
 // ---------- rig pieces ----------
+// controller layout, in Effect Controls order: [name, kind, value]
+function layout() {
+    var t = "#2FF3FF"; try { if (/^#?[0-9a-f]{6}$/i.test(String(params.tintColor))) t = String(params.tintColor); } catch (e) {}
+    function on(id, d) { return params[id] === undefined ? d : !!params[id]; }
+    return [
+        ["Radius", "s", num(params.radius, 300)], ["Softness", "s", num(params.softness, 70)], ["Curve", "s", num(params.curve, 1)],
+        ["Strength", "s", 100], ["Invert", "c", on("invert", false)], ["3D Distance", "c", on("use3d", true)],
+        ["Delay (frames)", "s", num(params.delay, 0)], ["Effectors", "s", 0],
+        ["Scale ON", "c", on("scale", true)], ["Scale", "s", num(params.scaleAmt, 60)],
+        ["Opacity ON", "c", on("opacity", false)], ["Opacity", "s", num(params.opacityAmt, -70)],
+        ["Rotation ON", "c", on("rotation", false)], ["Rotation", "s", num(params.rotationAmt, 45)],
+        ["Push ON", "c", on("push", false)], ["Push", "s", num(params.pushAmt, 80)],
+        ["Lift Z ON", "c", on("lift", false)], ["Lift Z", "s", num(params.liftAmt, 300)],
+        ["Blur ON", "c", on("blur", false)], ["Blur", "s", num(params.blurAmt, 20)],
+        ["Tint ON", "c", on("tint", false)], ["Tint Color", "k", sqHex(t)], ["Tint Amount", "s", num(params.tintAmt, 100)]
+    ];
+}
 function controller(update) {
     var c = byName(CTRL), fresh = false;
     if (!c) {
@@ -77,25 +94,22 @@ function controller(update) {
         try { tr(c).property("ADBE Position").setValue([80, 80]); } catch (e) {}
     }
     try { tr(c).property("ADBE Opacity").setValue(100); } catch (e0) {}
-    var s = (fresh || update);
-    function sl(n, v) { var p = sqFx(c).property(n); if (!p) return sqSlider(c, n, v); if (s) try { p.property(1).setValue(v); } catch (e) {} return p; }
-    sl("Radius", num(params.radius, 300));
-    sl("Softness", num(params.softness, 70));
-    sl("Curve", num(params.curve, 1));
-    sl("Strength", 100);
-    if (!sqFx(c).property("Invert")) sqCheckbox(c, "Invert", params.invert); else if (s) try { sqFx(c).property("Invert").property(1).setValue(params.invert ? 1 : 0); } catch (e1) {}
-    if (!sqFx(c).property("3D Distance")) sqCheckbox(c, "3D Distance", params.use3d !== false); else if (s) try { sqFx(c).property("3D Distance").property(1).setValue(params.use3d !== false ? 1 : 0); } catch (e2) {}
-    sl("Delay (frames)", num(params.delay, 0));
-    sl("Effectors", 0);
-    sl("Scale", num(params.scaleAmt, 60));
-    sl("Opacity", num(params.opacityAmt, -70));
-    sl("Rotation", num(params.rotationAmt, 45));
-    sl("Push", num(params.pushAmt, 80));
-    sl("Lift Z", num(params.liftAmt, 300));
-    sl("Blur", num(params.blurAmt, 20));
-    if (!sqFx(c).property("Tint Color")) sqCtrl(c, "ADBE Color Control", "Tint Color", sqHex(params.tintColor || "#2FF3FF"));
-    else if (s) try { sqFx(c).property("Tint Color").property(1).setValue(sqHex(params.tintColor || "#2FF3FF")); } catch (e3) {}
-    sl("Tint Amount", num(params.tintAmt, 100));
+    // a controller from v1 has no ON boxes: rebuild it in the new order
+    if (!fresh && !sqFx(c).property("Scale ON")) {
+        var fx = sqFx(c); for (var r = fx.numProperties; r >= 1; r--) sqFx(c).property(r).remove();
+        fresh = true;
+    }
+    var L = layout(), set = fresh || update;
+    for (var i = 0; i < L.length; i++) {
+        var n = L[i][0], kind = L[i][1], v = L[i][2], have = sqFx(c).property(n);
+        if (!have) {
+            if (kind === "s") sqSlider(c, n, v);
+            else if (kind === "c") sqCheckbox(c, n, v);
+            else sqCtrl(c, "ADBE Color Control", n, v);
+        } else if (set) {
+            try { sqFx(c).property(n).property(1).setValue(kind === "c" ? (v ? 1 : 0) : v); } catch (e1) {}
+        }
+    }
     return c;
 }
 function syncCount(c) { try { sqFx(c).property("Effectors").property(1).setValue(maxEff()); } catch (e) {} }
@@ -107,16 +121,19 @@ function ring(eff) {
     s.moveAfter(eff);
     s.parent = eff;
     try { tr(s).property("ADBE Position").setValue(tr(eff).property("ADBE Anchor Point").value); } catch (e) {}
-    var root = s.property("ADBE Root Vectors Group");
+    // AE invalidates property references when siblings are added, so every step re-reads from the layer
     function circle(name, expr, op) {
-        var g = root.addProperty("ADBE Vector Group"); g.name = name;
-        var v = g.property("ADBE Vectors Group");
-        var el = v.addProperty("ADBE Vector Shape - Ellipse");
-        setExpr(el.property("ADBE Vector Ellipse Size"), expr);
-        var st = v.addProperty("ADBE Vector Graphic - Stroke");
-        try { st.property("ADBE Vector Stroke Color").setValue([0.18, 0.95, 1, 1]); } catch (e1) {}
-        try { st.property("ADBE Vector Stroke Width").setValue(2); } catch (e2) {}
-        try { st.property("ADBE Vector Stroke Opacity").setValue(op); } catch (e3) {}
+        var gi = s.property("ADBE Root Vectors Group").addProperty("ADBE Vector Group").propertyIndex;
+        var G = function () { return s.property("ADBE Root Vectors Group").property(gi); };
+        G().name = name;
+        var V = function () { return G().property("ADBE Vectors Group"); };
+        V().addProperty("ADBE Vector Shape - Ellipse");
+        V().addProperty("ADBE Vector Graphic - Stroke");
+        setExpr(V().property("ADBE Vector Shape - Ellipse").property("ADBE Vector Ellipse Size"), expr);
+        var ST = function () { return V().property("ADBE Vector Graphic - Stroke"); };
+        try { ST().property("ADBE Vector Stroke Color").setValue([0.18, 0.95, 1, 1]); } catch (e1) {}
+        try { ST().property("ADBE Vector Stroke Width").setValue(2); } catch (e2) {}
+        try { ST().property("ADBE Vector Stroke Opacity").setValue(op); } catch (e3) {}
     }
     var src = 'var C=thisComp.layer("' + q(CTRL) + '"); var R=C.effect("Radius")(1).value; ';
     circle("Radius", src + "[R*2,R*2]", 90);
@@ -136,7 +153,7 @@ function addEffector(is3d, follow) {
         try { tr(e).property("ADBE Position").setValue(is3d ? [comp.width / 2, comp.height / 2, 0] : [comp.width / 2, comp.height / 2]); } catch (e3) {}
     }
     e.moveToBeginning();
-    ring(e);
+    try { ring(e); } catch (er) {}   // the guide ring is optional, never let it stop the rig
     return e;
 }
 
@@ -206,12 +223,6 @@ if (act === "Add effector" || act === "Effector from selected layer") {
 // Apply to selected
 var tg = targets(false);
 if (!tg.length) return "Select the layers that should react.";
-var ch = {
-    scale: params.scale !== false, opacity: !!params.opacity, rotation: !!params.rotation,
-    push: !!params.push, lift: !!params.lift, blur: !!params.blur, tint: !!params.tint
-};
-if (!(ch.scale || ch.opacity || ch.rotation || ch.push || ch.lift || ch.blur || ch.tint)) return "Turn on at least one property (Scale, Opacity, ...).";
-
 var C0 = controller(params.update !== false);
 var has3 = false;
 for (var h = 0; h < tg.length; h++) if (tg[h].threeDLayer) has3 = true;
@@ -222,28 +233,23 @@ var done = 0, notes = [];
 for (var i = 0; i < tg.length; i++) {
     var l = tg[i];
     if (drivesEffector(l)) { notes.push(l.name + " drives an effector"); continue; }
+    try {
     unrig(l);
     var w = sqSlider(l, "SQ Prox Weight", 0);
     setExpr(w.property(1), X_WEIGHT);
-    var T = tr(l);
-    if (ch.scale) setExpr(T.property("ADBE Scale"), X_SCALE);
-    if (ch.opacity) setExpr(T.property("ADBE Opacity"), X_OPAC);
-    if (ch.rotation) setExpr(T.property("ADBE Rotate Z"), X_ROT);
-    if (ch.push || ch.lift) setExpr(T.property("ADBE Anchor Point"), X_POS);
-    if (ch.blur) {
-        var bl = sqFx(l).addProperty("ADBE Gaussian Blur 2"); bl.name = "SQ Prox Blur";
-        bl = sqFx(l).property("SQ Prox Blur");
-        try { bl.property(3).setValue(1); } catch (e4) {}
-        setExpr(bl.property(1), X_BLUR);
-    }
-    if (ch.tint) {
-        var tn = sqFx(l).addProperty("ADBE Tint"); tn.name = "SQ Prox Tint";
-        tn = sqFx(l).property("SQ Prox Tint");
-        setExpr(tn.property(1), X_TINTC);
-        setExpr(tn.property(2), X_TINTC);
-        setExpr(tn.property(3), X_TINTA);
-    }
+    setExpr(tr(l).property("ADBE Scale"), X_SCALE);
+    setExpr(tr(l).property("ADBE Opacity"), X_OPAC);
+    setExpr(tr(l).property("ADBE Rotate Z"), X_ROT);
+    setExpr(tr(l).property("ADBE Anchor Point"), X_POS);
+    sqFx(l).addProperty("ADBE Gaussian Blur 2").name = "SQ Prox Blur";
+    try { sqFx(l).property("SQ Prox Blur").property(3).setValue(1); } catch (e4) {}
+    setExpr(sqFx(l).property("SQ Prox Blur").property(1), X_BLUR);
+    sqFx(l).addProperty("ADBE Tint").name = "SQ Prox Tint";
+    setExpr(sqFx(l).property("SQ Prox Tint").property(1), X_TINTC);
+    setExpr(sqFx(l).property("SQ Prox Tint").property(2), X_TINTC);
+    setExpr(sqFx(l).property("SQ Prox Tint").property(3), X_TINTA);
     done++;
+    } catch (err) { notes.push(l.name + ": " + (err && err.message ? err.message : err) + (err && err.line ? " (line " + err.line + ")" : "")); }
 }
 if (!done) return "Nothing rigged: " + notes.join("; ");
-return "Proximity on " + done + " layer" + (done > 1 ? "s" : "") + ". Move \"" + EFF + "1\" to see it; tweak everything on \"" + CTRL + "\"." + (notes.length ? " (" + notes.join("; ") + ")" : "");
+return "Proximity on " + done + " layer" + (done > 1 ? "s" : "") + ". Move \"" + EFF + "1\" to see it; turn properties on/off with the ON boxes on \"" + CTRL + "\"." + (notes.length ? " (" + notes.join("; ") + ")" : "");
