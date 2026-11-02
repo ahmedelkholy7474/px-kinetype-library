@@ -31,10 +31,14 @@ var addons = fs.existsSync(addonDir) ? fs.readdirSync(addonDir).filter(function 
   .map(function (f) {
     var a = JSON.parse(fs.readFileSync(path.join(addonDir, f), "utf8"));
     if (a.scriptFile) {
-      a.script = (a.include || []).concat([a.scriptFile]).map(function (src) {
+      // "assets": { "VAR": "file" } become string variables the add-on can write to disk
+      var assets = Object.keys(a.assets || {}).map(function (k) {
+        return "var " + k + " = " + JSON.stringify(fs.readFileSync(path.join(addonDir, "src", a.assets[k]), "utf8")) + ";";
+      });
+      a.script = assets.concat((a.include || []).concat([a.scriptFile]).map(function (src) {
         return fs.readFileSync(path.join(addonDir, "src", src), "utf8");
-      }).join("\n");
-      delete a.scriptFile; delete a.include;
+      })).join("\n");
+      delete a.scriptFile; delete a.include; delete a.assets;
     }
     return a;
   })
