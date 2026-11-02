@@ -1,92 +1,98 @@
-// Squeezy add-on: Squeezy Proximity (original Squeezy code)
-// Layers react to their distance from one or more effector nulls.
+// Squeezy add-on: Squeezy Proximity v3 (original Squeezy code)
+// Layers react to how close an effector null is. Pick a Look, press Apply, move the effector.
 // runs as function(params, comp, layers)
 if (!comp) return "Open a composition first.";
 
 var CTRL = "SQ Proximity Controller";
 var EFF = "SQ Effector ";
-var MARK = "// SQ-PROX";
-var act = String(params.action || "Apply to selected");
+var MAXEFF = 10;
+var act = String(params.action || "Apply");
+
+// Look -> which boxes start ON and their amounts
+var LOOKS = {
+    "Magnify":   { invert: 0, on: { scale: 1 }, scale: 60 },
+    "Shrink":    { invert: 0, on: { scale: 1 }, scale: -60 },
+    "Reveal":    { invert: 1, on: { opacity: 1 }, opacity: -100 },
+    "Fade out":  { invert: 0, on: { opacity: 1 }, opacity: -100 },
+    "Push away": { invert: 0, on: { position: 1 }, position: 120 },
+    "Pull in":   { invert: 0, on: { position: 1 }, position: -120 },
+    "Spin":      { invert: 0, on: { rotation: 1 }, rotation: 180 },
+    "Focus":     { invert: 1, on: { blur: 1 }, blur: 30 },
+    "Color":     { invert: 0, on: { color: 1 } },
+    "Pop":       { invert: 0, on: { scale: 1, rotation: 1, color: 1 }, scale: 50, rotation: 20 }
+};
 
 function q(s) { return String(s).replace(/\\/g, "\\\\").replace(/"/g, "\\\""); }
 function byName(n) { for (var i = 1; i <= comp.numLayers; i++) if (comp.layer(i).name === n) return comp.layer(i); return null; }
 function isRig(l) { var n = String(l.name); return n === CTRL || n.indexOf(EFF) === 0; }
 function tr(l) { return l.property("ADBE Transform Group"); }
 function num(v, d) { v = parseFloat(v); return isNaN(v) ? d : v; }
-function maxEff() {
-    var m = 0;
-    for (var i = 1; i <= comp.numLayers; i++) {
-        var mm = String(comp.layer(i).name).match(/^SQ Effector (\d+)$/);
-        if (mm && parseInt(mm[1], 10) > m) m = parseInt(mm[1], 10);
-    }
-    return m;
-}
 function setExpr(p, e) { if (!p) return false; try { p.expression = e; return true; } catch (er) { return false; } }
+function freeEff() {
+    for (var k = 1; k <= MAXEFF; k++) if (!byName(EFF + k)) return k;
+    return 0;
+}
+function anyEff() { for (var k = 1; k <= MAXEFF; k++) if (byName(EFF + k)) return true; return false; }
 
 // ---------- expressions ----------
+var MARK = "// SQ-PROX";
 var CR = 'var C=thisComp.layer("' + q(CTRL) + '"); var cv=function(n){ return C.effect(n)(1).value; };\n';
-function core(X) {
-    return [
-        CR,
-        'var R=Math.max(1,cv("Radius")), F=Math.min(Math.max(cv("Softness"),0),100)/100, K=Math.max(0.05,cv("Curve")), S=cv("Strength")/100;',
-        'var N=Math.round(cv("Effectors")), T=time-cv("Delay (frames)")*thisComp.frameDuration, D3=(cv("3D Distance")>0.5)&&thisLayer.threeDLayer;',
-        'var P0=' + X + ', P1=hasParent?parent.toWorld(P0):P0, ME=[P1[0],P1[1],P1.length>2?P1[2]:0];',
-        'var W=0, DX=0, DY=-1;',
-        'for (var k=1;k<=N;k++){',
-        '  var E=null; try{ E=thisComp.layer("' + q(EFF) + '"+k); }catch(er){ E=null; }',
-        '  if(!E) continue;',
-        '  var Q=E.toWorld(E.anchorPoint,T);',
-        '  var dx=ME[0]-Q[0], dy=ME[1]-Q[1], dz=(D3&&E.threeDLayer)?ME[2]-Q[2]:0;',
-        '  var d=Math.sqrt(dx*dx+dy*dy+dz*dz), inn=R*(1-F);',
-        '  var t=d<=inn?1:(d>=R?0:1-(d-inn)/Math.max(0.001,R-inn));',
-        '  t=t*t*(3-2*t); t=Math.pow(t,K);',
-        '  if(t>W){ W=t; var dl=Math.sqrt(dx*dx+dy*dy); if(dl>0.001){ DX=dx/dl; DY=dy/dl; } }',
-        '}',
-        'if(cv("Invert")>0.5) W=1-W;',
-        'W=W*S;'
-    ].join("\n");
-}
-var X_WEIGHT = MARK + " weight\nvar __r=0;\ntry{\n" + core("transform.position.value") + "\n__r=W*100;\n}catch(err){ __r=0; }\n__r";
-// push / lift live on the Anchor Point so Position stays untouched (no feedback into the distance)
-var X_POS = MARK + " push\nvar __r=value;\ntry{\n" + core("transform.position.value") +
-    '\nvar A=cv("Push ON")*cv("Push")*W, Z=cv("Lift Z ON")*cv("Lift Z")*W;' +
-    '\nvar ox=DX*A, oy=DY*A;' +
+// W = 0..1 influence, DX/DY = direction away from the nearest effector
+var CORE = [
+    CR,
+    'var R=Math.max(1,cv("Radius")), F=Math.min(Math.max(cv("Softness"),0),100)/100, S=cv("Amount")/100;',
+    'var P0=transform.position.value, P1=hasParent?parent.toWorld(P0):P0, ME=[P1[0],P1[1],P1.length>2?P1[2]:0];',
+    'var W=0, DX=0, DY=-1;',
+    'for (var k=1;k<=' + MAXEFF + ';k++){',
+    '  var E=null; try{ E=thisComp.layer("' + q(EFF) + '"+k); }catch(er){ E=null; }',
+    '  if(!E) continue;',
+    '  var Q=E.toWorld(E.anchorPoint);',
+    '  var dx=ME[0]-Q[0], dy=ME[1]-Q[1], dz=(E.threeDLayer&&thisLayer.threeDLayer)?ME[2]-Q[2]:0;',
+    '  var d=Math.sqrt(dx*dx+dy*dy+dz*dz), inn=R*(1-F);',
+    '  var t=d<=inn?1:(d>=R?0:1-(d-inn)/Math.max(0.001,R-inn));',
+    '  t=t*t*(3-2*t);',
+    '  if(t>W){ W=t; var dl=Math.sqrt(dx*dx+dy*dy); if(dl>0.001){ DX=dx/dl; DY=dy/dl; } }',
+    '}',
+    'if(cv("Invert")>0.5) W=1-W;',
+    'W=W*S;'
+].join("\n");
+function body(tag, code) { return MARK + " " + tag + "\nvar __r=value;\ntry{\n" + code + "\n}catch(err){ __r=value; }\n__r"; }
+var X_WEIGHT = MARK + " weight\nvar __r=0;\ntry{\n" + CORE + "\n__r=W*100;\n}catch(err){ __r=0; }\n__r";
+function useW(code) { return CR + 'var W=effect("SQ Prox Weight")(1).value/100;\n' + code; }
+var X_SCALE = body("scale", useW('__r=mul(value, Math.max(0, 1+cv("Scale")*cv("Scale %")/100*W));'));
+var X_OPAC = body("opacity", useW('__r=clamp(value+W*cv("Opacity")*cv("Opacity %"),0,100);'));
+var X_ROT = body("rotation", useW('__r=value+W*cv("Rotation")*cv("Rotation deg");'));
+var X_BLUR = body("blur", useW('__r=Math.max(0,W*cv("Blur")*cv("Blur px"));'));
+var X_TINTA = body("color", useW('__r=clamp(W*cv("Color")*100,0,100);'));
+var X_TINTC = body("color pick", 'var __c=thisComp.layer("' + q(CTRL) + '").effect("Color Pick")(1).value; __r=__c;');
+// push lives on the Anchor Point, so Position (and the distance) is never touched
+var X_PUSH = body("position", CORE +
+    '\nvar A=cv("Position")*cv("Position px")*W, ox=DX*A, oy=DY*A;' +
     '\nif(hasParent){ var a0=parent.fromWorld(ME), a1=parent.fromWorld([ME[0]+ox,ME[1]+oy,ME[2]]); ox=a1[0]-a0[0]; oy=a1[1]-a0[1]; }' +
     '\nvar sc=transform.scale.value, rr=-transform.rotation.value*Math.PI/180;' +
     '\nvar sd=function(v){ v=v/100; return Math.abs(v)<0.0001?(v<0?-0.0001:0.0001):v; };' +
     '\nvar lx=(ox*Math.cos(rr)-oy*Math.sin(rr))/sd(sc[0]), ly=(ox*Math.sin(rr)+oy*Math.cos(rr))/sd(sc[1]);' +
-    '\n__r=value.length>2?[value[0]-lx,value[1]-ly,value[2]+Z/sd(sc.length>2?sc[2]:100)]:[value[0]-lx,value[1]-ly];' +
-    "\n}catch(err){ __r=value; }\n__r";
-function wrap(tag, body) {
-    return MARK + " " + tag + "\nvar __r=value;\ntry{\n" + CR +
-        'var W=effect("SQ Prox Weight")(1).value/100;\n' + body + "\n}catch(err){ __r=value; }\n__r";
-}
-var X_SCALE = wrap("scale", '__r=mul(value, Math.max(0, 1+cv("Scale ON")*cv("Scale")/100*W));');
-var X_OPAC = wrap("opacity", '__r=clamp(value+W*cv("Opacity ON")*cv("Opacity"),0,100);');
-var X_ROT = wrap("rotation", '__r=value+W*cv("Rotation ON")*cv("Rotation");');
-var X_BLUR = wrap("blur", '__r=Math.max(0,W*cv("Blur ON")*cv("Blur"));');
-var X_TINTA = wrap("tint", '__r=clamp(W*cv("Tint ON")*cv("Tint Amount"),0,100);');
-var X_TINTC = MARK + ' tint colour\nvar __r=value;\ntry{ __r=thisComp.layer("' + q(CTRL) + '").effect("Tint Color")(1).value; }catch(err){ __r=value; }\n__r';
+    '\n__r=value.length>2?[value[0]-lx,value[1]-ly,value[2]]:[value[0]-lx,value[1]-ly];');
 
-// ---------- rig pieces ----------
-// controller layout, in Effect Controls order: [name, kind, value]
-function layout() {
-    var t = "#2FF3FF"; try { if (/^#?[0-9a-f]{6}$/i.test(String(params.tintColor))) t = String(params.tintColor); } catch (e) {}
-    function on(id, d) { return params[id] === undefined ? d : !!params[id]; }
+// ---------- controller ----------
+function layout(look) {
+    var L = LOOKS[look] || LOOKS["Magnify"], on = L.on;
+    var hex = "#2FF3FF"; try { if (/^#?[0-9a-f]{6}$/i.test(String(params.color))) hex = String(params.color); } catch (e) {}
+    function a(k, d) { return L[k] !== undefined ? L[k] : d; }
     return [
-        ["Radius", "s", num(params.radius, 300)], ["Softness", "s", num(params.softness, 70)], ["Curve", "s", num(params.curve, 1)],
-        ["Strength", "s", 100], ["Invert", "c", on("invert", false)], ["3D Distance", "c", on("use3d", true)],
-        ["Delay (frames)", "s", num(params.delay, 0)], ["Effectors", "s", 0],
-        ["Scale ON", "c", on("scale", true)], ["Scale", "s", num(params.scaleAmt, 60)],
-        ["Opacity ON", "c", on("opacity", false)], ["Opacity", "s", num(params.opacityAmt, -70)],
-        ["Rotation ON", "c", on("rotation", false)], ["Rotation", "s", num(params.rotationAmt, 45)],
-        ["Push ON", "c", on("push", false)], ["Push", "s", num(params.pushAmt, 80)],
-        ["Lift Z ON", "c", on("lift", false)], ["Lift Z", "s", num(params.liftAmt, 300)],
-        ["Blur ON", "c", on("blur", false)], ["Blur", "s", num(params.blurAmt, 20)],
-        ["Tint ON", "c", on("tint", false)], ["Tint Color", "k", sqHex(t)], ["Tint Amount", "s", num(params.tintAmt, 100)]
+        ["Radius", "s", num(params.radius, 300)],
+        ["Softness", "s", num(params.softness, 70)],
+        ["Amount", "s", num(params.amount, 100)],
+        ["Invert", "c", L.invert],
+        ["Scale", "c", on.scale ? 1 : 0], ["Scale %", "s", a("scale", 60)],
+        ["Opacity", "c", on.opacity ? 1 : 0], ["Opacity %", "s", a("opacity", -100)],
+        ["Rotation", "c", on.rotation ? 1 : 0], ["Rotation deg", "s", a("rotation", 90)],
+        ["Position", "c", on.position ? 1 : 0], ["Position px", "s", a("position", 120)],
+        ["Blur", "c", on.blur ? 1 : 0], ["Blur px", "s", a("blur", 30)],
+        ["Color", "c", on.color ? 1 : 0], ["Color Pick", "k", sqHex(hex)]
     ];
 }
-function controller(update) {
+function controller(look) {
     var c = byName(CTRL), fresh = false;
     if (!c) {
         c = comp.layers.addNull(comp.duration);
@@ -94,26 +100,29 @@ function controller(update) {
         try { tr(c).property("ADBE Position").setValue([80, 80]); } catch (e) {}
     }
     try { tr(c).property("ADBE Opacity").setValue(100); } catch (e0) {}
-    // a controller from v1 has no ON boxes: rebuild it in the new order
-    if (!fresh && !sqFx(c).property("Scale ON")) {
-        var fx = sqFx(c); for (var r = fx.numProperties; r >= 1; r--) sqFx(c).property(r).remove();
+    // older controllers (v1/v2) used other names: rebuild
+    if (!fresh && (!sqFx(c).property("Position px") || sqFx(c).property("Scale ON"))) {
+        for (var r = sqFx(c).numProperties; r >= 1; r--) sqFx(c).property(r).remove();
         fresh = true;
     }
-    var L = layout(), set = fresh || update;
+    // the Look only overwrites the controller when you pick a different one (your tweaks survive re-Apply)
+    var same = String(c.comment) === "SQ-PROX look:" + look;
+    var L = layout(look);
     for (var i = 0; i < L.length; i++) {
         var n = L[i][0], kind = L[i][1], v = L[i][2], have = sqFx(c).property(n);
         if (!have) {
             if (kind === "s") sqSlider(c, n, v);
             else if (kind === "c") sqCheckbox(c, n, v);
             else sqCtrl(c, "ADBE Color Control", n, v);
-        } else if (set) {
+        } else if (!same || n === "Radius" || n === "Softness" || n === "Amount" || n === "Color Pick") {
             try { sqFx(c).property(n).property(1).setValue(kind === "c" ? (v ? 1 : 0) : v); } catch (e1) {}
         }
     }
+    try { c.comment = "SQ-PROX look:" + look; } catch (e2) {}
     return c;
 }
-function syncCount(c) { try { sqFx(c).property("Effectors").property(1).setValue(maxEff()); } catch (e) {} }
 
+// ---------- effector ----------
 function ring(eff) {
     var s = comp.layers.addShape();
     s.name = eff.name + " Ring";
@@ -138,10 +147,10 @@ function ring(eff) {
     var src = 'var C=thisComp.layer("' + q(CTRL) + '"); var R=C.effect("Radius")(1).value; ';
     circle("Radius", src + "[R*2,R*2]", 90);
     circle("Core", src + 'var F=Math.min(Math.max(C.effect("Softness")(1).value,0),100)/100; var r=R*(1-F)*2; [r,r]', 40);
-    return s;
 }
 function addEffector(is3d, follow) {
-    var k = maxEff() + 1;
+    var k = freeEff();
+    if (!k) throw new Error("You already have " + MAXEFF + " effectors.");
     var e = comp.layers.addNull(comp.duration);
     e.name = EFF + k; e.label = 2;
     try { tr(e).property("ADBE Opacity").setValue(100); } catch (e0) {}
@@ -157,15 +166,16 @@ function addEffector(is3d, follow) {
     return e;
 }
 
+// ---------- layers ----------
+function rigged(l) { var f = sqFx(l); return !!(f && f.property("SQ Prox Weight")); }
 function unrig(l) {
     var t = tr(l), n = 0;
     var props = [t.property("ADBE Anchor Point"), t.property("ADBE Position"), t.property("ADBE Scale"), t.property("ADBE Opacity"), t.property("ADBE Rotate Z")];
     for (var i = 0; i < props.length; i++) {
-        var p = props[i];
-        try { if (p && String(p.expression).indexOf("SQ-PROX") >= 0) { p.expression = ""; n++; } } catch (e) {}
+        try { if (props[i] && String(props[i].expression).indexOf("SQ-PROX") >= 0) { props[i].expression = ""; n++; } } catch (e) {}
     }
     var fx = sqFx(l);
-    if (fx) for (var j = fx.numProperties; j >= 1; j--) if (String(fx.property(j).name).indexOf("SQ Prox") === 0) { fx.property(j).remove(); n++; }
+    if (fx) for (var j = fx.numProperties; j >= 1; j--) if (String(sqFx(l).property(j).name).indexOf("SQ Prox") === 0) { sqFx(l).property(j).remove(); n++; }
     return n;
 }
 function drivesEffector(l) {
@@ -185,71 +195,66 @@ function targets(all) {
     }
     return out;
 }
+function any3D() { for (var b = 1; b <= comp.numLayers; b++) if (rigged(comp.layer(b)) && comp.layer(b).threeDLayer) return true; return false; }
 
 // ---------- actions ----------
-if (act === "Remove rig") {
-    var all = !layers.length, list = targets(all), cleaned = 0;
+if (act === "Remove") {
+    var list = targets(!layers.length), cleaned = 0;
     for (var r = 0; r < list.length; r++) if (unrig(list[r])) cleaned++;
-    var left = 0;
-    for (var a = 1; a <= comp.numLayers; a++) { var fxp = sqFx(comp.layer(a)); if (fxp && fxp.property("SQ Prox Weight")) left++; }
-    var gone = 0;
-    if (!left) {
-        for (var z = comp.numLayers; z >= 1; z--) if (isRig(comp.layer(z))) { comp.layer(z).remove(); gone++; }
-    }
-    if (!cleaned && !gone) return "Nothing to remove: no Proximity rig found.";
-    return "Proximity removed from " + cleaned + " layer" + (cleaned === 1 ? "" : "s") + (gone ? " and the controller / effectors deleted" : "");
+    var left = 0, gone = 0;
+    for (var a = 1; a <= comp.numLayers; a++) if (rigged(comp.layer(a))) left++;
+    if (!left) for (var z = comp.numLayers; z >= 1; z--) if (isRig(comp.layer(z))) { comp.layer(z).remove(); gone++; }
+    if (!cleaned && !gone) return "No Proximity found here.";
+    return "Proximity removed" + (cleaned ? " from " + cleaned + " layer" + (cleaned === 1 ? "" : "s") : "") + (gone ? ", controller and effectors deleted" : "") + ".";
 }
 
-if (act === "Add effector" || act === "Effector from selected layer") {
-    var c0 = controller(false);
-    var any3 = false;
-    for (var b = 1; b <= comp.numLayers; b++) { var fb = sqFx(comp.layer(b)); if (fb && fb.property("SQ Prox Weight") && comp.layer(b).threeDLayer) any3 = true; }
-    var made = 0;
-    if (act === "Add effector") { addEffector(any3, null); made = 1; }
-    else {
-        var src2 = targets(false);
-        if (!src2.length) return "Select the layer(s) the effector should follow.";
-        for (var f = 0; f < src2.length; f++) {
-            var fx2 = sqFx(src2[f]);
-            if (fx2 && fx2.property("SQ Prox Weight")) continue; // a rigged layer cannot drive the rig (loop)
-            addEffector(src2[f].threeDLayer || any3, src2[f]); made++;
-        }
-        if (!made) return "Those layers react to the rig, so they cannot drive it. Pick another layer.";
-    }
-    syncCount(c0);
-    return made + " effector" + (made > 1 ? "s" : "") + " added. Animate it, or move it around, to push the layers.";
+if (act === "Add effector") {
+    if (!byName(CTRL)) return "Apply Proximity to some layers first.";
+    var e1 = addEffector(any3D(), null);
+    return "\"" + e1.name + "\" added in the middle of the comp. Move it around.";
 }
 
-// Apply to selected
+if (act === "Follow selected layer") {
+    if (!byName(CTRL)) return "Apply Proximity to some layers first, then select the layer that should drive it.";
+    var src2 = targets(false), made = 0;
+    if (!src2.length) return "Select the layer the effector should follow (a mouse, a ball, a light...).";
+    for (var f = 0; f < src2.length; f++) {
+        if (rigged(src2[f])) continue;   // a reacting layer cannot also drive the rig
+        addEffector(src2[f].threeDLayer || any3D(), src2[f]); made++;
+    }
+    if (!made) return "That layer reacts to Proximity, so it cannot drive it. Select a different layer.";
+    return "Effector now follows " + (made === 1 ? "\"" + src2[0].name + "\"" : made + " layers") + ".";
+}
+
+// Apply
 var tg = targets(false);
-if (!tg.length) return "Select the layers that should react.";
-var C0 = controller(params.update !== false);
+if (!tg.length) return "Select the layers that should react, then press Apply.";
+var look = String(params.look || "Magnify");
+controller(look);
 var has3 = false;
 for (var h = 0; h < tg.length; h++) if (tg[h].threeDLayer) has3 = true;
-if (!maxEff()) addEffector(has3, null);
-syncCount(C0);
+if (!anyEff()) addEffector(has3, null);
 
 var done = 0, notes = [];
 for (var i = 0; i < tg.length; i++) {
     var l = tg[i];
     if (drivesEffector(l)) { notes.push(l.name + " drives an effector"); continue; }
     try {
-    unrig(l);
-    var w = sqSlider(l, "SQ Prox Weight", 0);
-    setExpr(w.property(1), X_WEIGHT);
-    setExpr(tr(l).property("ADBE Scale"), X_SCALE);
-    setExpr(tr(l).property("ADBE Opacity"), X_OPAC);
-    setExpr(tr(l).property("ADBE Rotate Z"), X_ROT);
-    setExpr(tr(l).property("ADBE Anchor Point"), X_POS);
-    sqFx(l).addProperty("ADBE Gaussian Blur 2").name = "SQ Prox Blur";
-    try { sqFx(l).property("SQ Prox Blur").property(3).setValue(1); } catch (e4) {}
-    setExpr(sqFx(l).property("SQ Prox Blur").property(1), X_BLUR);
-    sqFx(l).addProperty("ADBE Tint").name = "SQ Prox Tint";
-    setExpr(sqFx(l).property("SQ Prox Tint").property(1), X_TINTC);
-    setExpr(sqFx(l).property("SQ Prox Tint").property(2), X_TINTC);
-    setExpr(sqFx(l).property("SQ Prox Tint").property(3), X_TINTA);
-    done++;
-    } catch (err) { notes.push(l.name + ": " + (err && err.message ? err.message : err) + (err && err.line ? " (line " + err.line + ")" : "")); }
+        unrig(l);
+        setExpr(sqSlider(l, "SQ Prox Weight", 0).property(1), X_WEIGHT);
+        setExpr(tr(l).property("ADBE Scale"), X_SCALE);
+        setExpr(tr(l).property("ADBE Opacity"), X_OPAC);
+        setExpr(tr(l).property("ADBE Rotate Z"), X_ROT);
+        setExpr(tr(l).property("ADBE Anchor Point"), X_PUSH);
+        sqFx(l).addProperty("ADBE Gaussian Blur 2").name = "SQ Prox Blur";
+        try { sqFx(l).property("SQ Prox Blur").property(3).setValue(1); } catch (e4) {}
+        setExpr(sqFx(l).property("SQ Prox Blur").property(1), X_BLUR);
+        sqFx(l).addProperty("ADBE Tint").name = "SQ Prox Color";
+        setExpr(sqFx(l).property("SQ Prox Color").property(1), X_TINTC);
+        setExpr(sqFx(l).property("SQ Prox Color").property(2), X_TINTC);
+        setExpr(sqFx(l).property("SQ Prox Color").property(3), X_TINTA);
+        done++;
+    } catch (err) { notes.push(l.name + ": " + (err && err.message ? err.message : err)); }
 }
-if (!done) return "Nothing rigged: " + notes.join("; ");
-return "Proximity on " + done + " layer" + (done > 1 ? "s" : "") + ". Move \"" + EFF + "1\" to see it; turn properties on/off with the ON boxes on \"" + CTRL + "\"." + (notes.length ? " (" + notes.join("; ") + ")" : "");
+if (!done) return "Nothing applied: " + notes.join("; ");
+return look + " on " + done + " layer" + (done > 1 ? "s" : "") + ". Move \"" + EFF + "1\" over them." + (notes.length ? " (" + notes.join("; ") + ")" : "");

@@ -1,11 +1,11 @@
 {
   "id": "proximity",
   "name": "Squeezy Proximity",
-  "version": 2,
+  "version": 3,
   "order": 5,
   "status": "ready",
   "requires": "2.0",
-  "description": "Layers react to how close an effector is: scale, opacity, rotation, push / pull, Z lift, blur and tint. Every property has an ON checkbox and a slider on one controller, so you can switch them live in Effect Controls.",
+  "description": "Pick a look, press Apply, then move the effector: the layers near it react. Fine-tune and switch effects on/off from the controller.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"2.5\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"6\" opacity=\".6\"/><circle cx=\"12\" cy=\"12\" r=\"9.5\" opacity=\".3\"/></svg>",
   "colors": [
     "#7B5CFF",
@@ -15,19 +15,37 @@
     "_common.jsx"
   ],
   "scriptFile": "proximity.jsx",
-  "runLabel": "Run",
+  "runLabel": "Go",
   "params": [
     {
       "id": "action",
-      "label": "Action",
+      "label": "Do",
       "type": "select",
       "options": [
-        "Apply to selected",
+        "Apply",
         "Add effector",
-        "Effector from selected layer",
-        "Remove rig"
+        "Follow selected layer",
+        "Remove"
       ],
-      "value": "Apply to selected"
+      "value": "Apply"
+    },
+    {
+      "id": "look",
+      "label": "Look",
+      "type": "select",
+      "options": [
+        "Magnify",
+        "Shrink",
+        "Reveal",
+        "Fade out",
+        "Push away",
+        "Pull in",
+        "Spin",
+        "Focus",
+        "Color",
+        "Pop"
+      ],
+      "value": "Magnify"
     },
     {
       "id": "radius",
@@ -39,164 +57,29 @@
       "unit": "px"
     },
     {
+      "id": "amount",
+      "label": "Amount",
+      "type": "slider",
+      "min": 0,
+      "max": 200,
+      "value": 100,
+      "unit": "%"
+    },
+    {
       "id": "softness",
       "label": "Softness",
       "type": "slider",
       "min": 0,
       "max": 100,
       "value": 70,
-      "unit": "%"
+      "unit": "%",
+      "advanced": true
     },
     {
-      "id": "scale",
-      "label": "Scale (starts ON)",
-      "type": "checkbox",
-      "value": true
-    },
-    {
-      "id": "scaleAmt",
-      "label": "Scale amount",
-      "type": "slider",
-      "min": -100,
-      "max": 300,
-      "value": 60,
-      "unit": "%"
-    },
-    {
-      "id": "opacity",
-      "label": "Opacity (starts ON)",
-      "type": "checkbox",
-      "value": false
-    },
-    {
-      "id": "opacityAmt",
-      "label": "Opacity amount",
-      "type": "slider",
-      "min": -100,
-      "max": 100,
-      "value": -70,
-      "unit": "%"
-    },
-    {
-      "id": "rotation",
-      "label": "Rotation (starts ON)",
-      "type": "checkbox",
-      "value": false
-    },
-    {
-      "id": "rotationAmt",
-      "label": "Rotation amount",
-      "type": "slider",
-      "min": -360,
-      "max": 360,
-      "value": 45,
-      "unit": "°"
-    },
-    {
-      "id": "push",
-      "label": "Push / pull (starts ON)",
-      "type": "checkbox",
-      "value": false
-    },
-    {
-      "id": "pushAmt",
-      "label": "Push (minus = pull)",
-      "type": "slider",
-      "min": -500,
-      "max": 500,
-      "value": 80,
-      "unit": "px"
-    },
-    {
-      "id": "lift",
-      "label": "Lift in Z (3D layers) (starts ON)",
-      "type": "checkbox",
-      "value": false
-    },
-    {
-      "id": "liftAmt",
-      "label": "Lift amount",
-      "type": "slider",
-      "min": -1000,
-      "max": 1000,
-      "value": 300,
-      "unit": "px"
-    },
-    {
-      "id": "blur",
-      "label": "Blur (starts ON)",
-      "type": "checkbox",
-      "value": false
-    },
-    {
-      "id": "blurAmt",
-      "label": "Blur amount",
-      "type": "slider",
-      "min": 0,
-      "max": 200,
-      "value": 20,
-      "unit": "px"
-    },
-    {
-      "id": "tint",
-      "label": "Tint (starts ON)",
-      "type": "checkbox",
-      "value": false
-    },
-    {
-      "id": "tintColor",
-      "label": "Tint colour (hex)",
+      "id": "color",
+      "label": "Color (hex)",
       "type": "text",
-      "value": "#2FF3FF"
-    },
-    {
-      "id": "tintAmt",
-      "label": "Tint amount",
-      "type": "slider",
-      "min": 0,
-      "max": 100,
-      "value": 100,
-      "unit": "%"
-    },
-    {
-      "id": "invert",
-      "label": "Invert (far layers react)",
-      "type": "checkbox",
-      "value": false,
-      "advanced": true
-    },
-    {
-      "id": "curve",
-      "label": "Falloff curve",
-      "type": "slider",
-      "min": 0.2,
-      "max": 5,
-      "step": 0.1,
-      "value": 1,
-      "advanced": true
-    },
-    {
-      "id": "delay",
-      "label": "Delay",
-      "type": "slider",
-      "min": 0,
-      "max": 30,
-      "value": 0,
-      "unit": "f",
-      "advanced": true
-    },
-    {
-      "id": "use3d",
-      "label": "3D distance",
-      "type": "checkbox",
-      "value": true,
-      "advanced": true
-    },
-    {
-      "id": "update",
-      "label": "Apply overwrites controller values",
-      "type": "checkbox",
-      "value": true,
+      "value": "#2FF3FF",
       "advanced": true
     }
   ]
