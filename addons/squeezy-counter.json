@@ -1,0 +1,190 @@
+{
+  "id": "squeezy-counter",
+  "name": "Squeezy Counter",
+  "version": 1,
+  "order": 6,
+  "status": "ready",
+  "requires": "2.0",
+  "description": "Shake-free number count: every digit sits in its own fixed slot, so the number never jitters as it grows. Commas from 10,000, decimals, Arabic digits and symbols like % $ AED.",
+  "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 20v-4M9 20v-8M14 20v-12\"/><path d=\"M18 9l2-2 2 2M20 7v9\"/></svg>",
+  "colors": [
+    "#5B6CFF",
+    "#F0508A"
+  ],
+  "include": [],
+  "scriptFile": "counter.jsx",
+  "runLabel": "Count",
+  "params": [
+    {
+      "id": "action",
+      "label": "Do",
+      "type": "select",
+      "options": [
+        "Create counter",
+        "Update selected",
+        "Apply style (counter + text)"
+      ],
+      "value": "Create counter"
+    },
+    {
+      "id": "start",
+      "label": "Start",
+      "type": "text",
+      "value": "0"
+    },
+    {
+      "id": "end",
+      "label": "End",
+      "type": "text",
+      "value": "25000"
+    },
+    {
+      "id": "duration",
+      "label": "Duration",
+      "type": "slider",
+      "min": 0.1,
+      "max": 10,
+      "step": 0.1,
+      "value": 2,
+      "unit": "s"
+    },
+    {
+      "id": "easing",
+      "label": "Easing",
+      "type": "select",
+      "options": [
+        "Smooth Stop",
+        "Ease In-Out",
+        "Linear",
+        "Expo Out"
+      ],
+      "value": "Smooth Stop"
+    },
+    {
+      "id": "decimals",
+      "label": "Decimals",
+      "type": "select",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "value": "0"
+    },
+    {
+      "id": "symbol",
+      "label": "Symbol",
+      "type": "select",
+      "options": [
+        "None",
+        "%",
+        "$",
+        "€",
+        "£",
+        "+",
+        "K",
+        "M",
+        "B",
+        "×",
+        "°",
+        "#",
+        "AED",
+        "د.إ",
+        "SAR",
+        "ر.س",
+        "EGP",
+        "ج.م",
+        "OMR",
+        "ر.ع"
+      ],
+      "value": "None"
+    },
+    {
+      "id": "side",
+      "label": "Symbol side",
+      "type": "select",
+      "options": [
+        "Auto",
+        "Left",
+        "Right"
+      ],
+      "value": "Auto"
+    },
+    {
+      "id": "commas",
+      "label": "Commas",
+      "type": "checkbox",
+      "value": true
+    },
+    {
+      "id": "commaFrom",
+      "label": "Commas from",
+      "type": "text",
+      "value": "10000"
+    },
+    {
+      "id": "digits",
+      "label": "Digits",
+      "type": "select",
+      "options": [
+        "Western 123",
+        "Arabic ١٢٣"
+      ],
+      "value": "Western 123"
+    },
+    {
+      "id": "align",
+      "label": "Align",
+      "type": "select",
+      "options": [
+        "Left",
+        "Center",
+        "Right"
+      ],
+      "value": "Center"
+    },
+    {
+      "id": "useSelected",
+      "label": "Use selected text (font + position)",
+      "type": "checkbox",
+      "value": true
+    },
+    {
+      "id": "prefix",
+      "label": "Prefix",
+      "type": "text",
+      "value": "",
+      "advanced": true
+    },
+    {
+      "id": "suffix",
+      "label": "Suffix",
+      "type": "text",
+      "value": "",
+      "advanced": true
+    },
+    {
+      "id": "mode",
+      "label": "Mode",
+      "type": "select",
+      "options": [
+        "Zero-Shake (per digit)",
+        "Single layer"
+      ],
+      "value": "Zero-Shake (per digit)",
+      "advanced": true
+    },
+    {
+      "id": "glide",
+      "label": "Glide",
+      "type": "slider",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "value": 0.25,
+      "unit": "s",
+      "advanced": true
+    }
+  ]
+}
