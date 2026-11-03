@@ -1,11 +1,11 @@
 {
   "id": "squeezy-counter",
   "name": "Squeezy Counter",
-  "version": 1,
+  "version": 2,
   "order": 6,
   "status": "ready",
   "requires": "2.0",
-  "description": "Shake-free number count: every digit sits in its own fixed slot, so the number never jitters as it grows. Commas from 10,000, decimals, Arabic digits and symbols like % $ AED.",
+  "description": "Shake-free number count in one text layer: every digit gets the same width, so the number never jitters as it grows. Any font, commas from 10,000, decimals, Arabic digits and symbols like % $ AED.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 20v-4M9 20v-8M14 20v-12\"/><path d=\"M18 9l2-2 2 2M20 7v9\"/></svg>",
   "colors": [
     "#5B6CFF",
@@ -59,6 +59,13 @@
         "Expo Out"
       ],
       "value": "Smooth Stop"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "text",
+      "value": "",
+      "placeholder": "e.g. Montserrat Bold (empty = selected text)"
     },
     {
       "id": "decimals",
@@ -169,10 +176,10 @@
       "label": "Mode",
       "type": "select",
       "options": [
-        "Zero-Shake (per digit)",
-        "Single layer"
+        "One layer",
+        "Per-digit layers"
       ],
-      "value": "Zero-Shake (per digit)",
+      "value": "One layer",
       "advanced": true
     },
     {

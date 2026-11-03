@@ -1,5 +1,5 @@
-// Squeezy add-on: Squeezy Counter v1 (original Squeezy code)
-// Shake-free number count: every character sits in its own fixed-width slot. Commas, decimals,
+// Squeezy add-on: Squeezy Counter v2 (original Squeezy code)
+// Shake-free number count in ONE text layer: text animators give every digit the same width. Commas, decimals,
 // Arabic digits and symbols (% $ AED ...). runs as function(params, comp, layers)
 var SQ_MSG = null, SQ_LAST = null;
 function alert(m) { SQ_MSG = String(m); }      // the panel shows the returned text instead of pop-ups
@@ -99,10 +99,45 @@ function affixPosExpr(ctrlName, isPrefix) {
         (isPrefix ? "[L[0]-L[1]-g+ap[0], ap[1]];" : "[L[0]+g+ap[0], ap[1]];");
 }
 
+// ---------------- one-layer counter ----------------
+//  text = prefix + number + suffix.  Shake-free without splitting layers:
+//  text animators give every digit the same width (tabular figures) and centre it in its slot.
+function partsExpr(prefix, suffix) {
+    return symExpr() + "\n" +
+        "function PARTS(t){var P=SYM(), sp=P.word?' ':'';return [" + q(prefix) + "+((P.after||P.t==='')?'':P.t+sp), S(t), ((P.after&&P.t!=='')?sp+P.t:'')+" + q(suffix) + "];}";
+}
+
 function singleTextExpr(prefix, suffix) {
-    return coreExpr("thisLayer") + "\n" + symExpr() + "\n" +
-        "var P=SYM(), sp=P.word?' ':'';\n" +
-        q(prefix) + " + (P.after||P.t==='' ? '' : P.t + sp) + S(time) + (P.after&&P.t!=='' ? sp + P.t : '') + " + q(suffix) + ";";
+    return coreExpr("thisLayer") + "\n" + partsExpr(prefix, suffix) + "\nvar p=PARTS(time);\np[0]+p[1]+p[2];";
+}
+
+function tabHead(ms, prefix, suffix) {
+    var adv = [];
+    for (var key in ms.adv) if (ms.adv.hasOwnProperty(key)) adv.push(q(key) + ":" + ms.adv[key]);
+    return coreExpr("thisLayer") + "\n" + partsExpr(prefix, suffix) + "\n" + [
+        "var ADV={" + adv.join(",") + "}, FS0=" + ms.fs0 + ", MW=" + ms.mw + ", MA=" + ms.ma + ";",
+        "var fs=FS0; try{var z=text.sourceText.style.fontSize; if(z>0) fs=z;}catch(e){}",
+        "function adv(c){var v=ADV[c];return (v===undefined?ADV['0']:v)*fs/100;}",
+        "function isD(c){var x=c.charCodeAt(0);return (x>=48&&x<=57)||(x>=1632&&x<=1641);}",
+        "var DW=(E('Arabic Digits',time)>0.5?MA:MW)*fs/100*Math.max(1,E('Digit Width %',time))/100, TR=E('Tracking',time);",
+        "function tabW(z){var w=0;for(var j=0;j<z.length;j++){var c=z.charAt(j);w+=isD(c)?DW:adv(c);}return w+TR*Math.max(0,z.length-1);}",
+        "var p=PARTS(time), s=p[1], k=textIndex-1-p[0].length, isN=(k>=0&&k<s.length), ch=isN?s.charAt(k):'';"
+    ].join("\n");
+}
+
+// tracking: each digit's advance becomes the slot width (After-tracking, so AE's own alignment stays right)
+function selTrack(head, T) {
+    return head + "\nvar T=" + T + ";\n" +
+        "var t=isN?((isD(ch)?DW-adv(ch):0)+(k<s.length-1?TR:0)):0;\n" +
+        "isN?((t*1000/fs+T)/(2*T)*100):0;";
+}
+// shift: centre each digit in its slot + glide when the digit count changes
+function selShift(head, P) {
+    return head + "\nvar PP=" + P + ";\n" +
+        "var al=Math.round(E('Align',time)), sm=Math.max(0,E('Smooth Glide',time)), G=0;\n" +
+        "if(sm>0&&al<3){var N=10,acc=0;for(var q2=0;q2<N;q2++)acc+=tabW(S(time-sm*q2/(N-1)));var W=tabW(s);G=(al==2?-(W-acc/N)/2:-(W-acc/N));}\n" +
+        "var off=G+((isN&&isD(ch))?(DW-adv(ch))/2:0);\n" +
+        "(off+PP)/(2*PP)*100;";
 }
 
 function addSymbolControls(layer, o) {
@@ -249,6 +284,37 @@ function slotsOf(comp, ctrl) {
     return out;
 }
 
+// ---------------- fonts ----------------
+function fnorm(x) { return String(x || "").toLowerCase().replace(/[\s\-_]/g, ""); }
+// returns a PostScript name, null (no font asked) or false (not installed)
+function resolveFont(name) {
+    name = String(name || "");
+    if (!name.replace(/\s/g, "")) return null;
+    var n = fnorm(name), fam = null, all;
+    try { all = app.fonts.allFonts; if (!all) return name; } catch (e) { return name; }   // AE < 2024: AE resolves it
+    for (var i = 0; i < all.length; i++) {
+        var group = all[i];
+        for (var j = 0; j < group.length; j++) {
+            var f = group[j], ps = "", hit = false;
+            try { ps = f.postScriptName; } catch (e0) {}
+            try { hit = n === fnorm(ps) || n === fnorm(f.fullName) || n === fnorm(f.familyName + f.styleName) || n === fnorm(f.nativeFullName) || n === fnorm(f.nativeFamilyName + f.nativeStyleName); } catch (e1) {}
+            if (hit) return ps;
+            try { if (!fam && (n === fnorm(f.familyName) || n === fnorm(f.nativeFamilyName))) fam = group; } catch (e2) {}
+        }
+    }
+    if (fam) {
+        for (var k = 0; k < fam.length; k++) { try { if (/^(regular|roman|book|normal)$/i.test(fam[k].styleName)) return fam[k].postScriptName; } catch (e3) {} }
+        return fam[0].postScriptName;
+    }
+    return false;
+}
+function fontOrAlert(st, fontName) {
+    var f = resolveFont(fontName);
+    if (f === false) { alert("Font \"" + fontName + "\" is not installed. Type its name as in the Character panel (e.g. Montserrat Bold).", SCRIPT_NAME); return false; }
+    if (f) st.font = f;
+    return true;
+}
+
 // ---------------- text style ----------------
 function readStyle(src) {
     var st = { font: null, size: 100, applyFill: true, fill: [1, 1, 1], applyStroke: false, stroke: [0, 0, 0], strokeW: 0, fauxBold: false, fauxItalic: false };
@@ -273,6 +339,7 @@ function applyStyle(layer, st, just, text) {
     try { td.applyStroke = st.applyStroke; if (st.applyStroke) { td.strokeColor = st.stroke; td.strokeWidth = st.strokeW; } } catch (e) {}
     try { td.fauxBold = st.fauxBold; td.fauxItalic = st.fauxItalic; } catch (e) {}
     try { td.tracking = 0; } catch (e) {}
+    try { td.autoKernType = AutoKernType.NO_AUTO_KERN; } catch (e) {}   // AE 2024+: no pair kerning, widths stay exact
     try { td.justification = just; } catch (e) {}
     p.setValue(td);
 }
@@ -286,17 +353,63 @@ function measure(comp, st, arabic) {
         td.text = str; p.setValue(td);
         return tmp.sourceRectAtTime(tmp.inPoint, false).width;
     }
-    var base = w("HH"), dw = 0, i;
+    var base = w("HH"), adv = {}, mw = 0, ma = 0, i, c;
     for (i = 0; i < 10; i++) {
-        var ch = arabic ? String.fromCharCode(1632 + i) : String(i);
-        dw = Math.max(dw, w("H" + ch + "H") - base);
+        c = String(i); adv[c] = w("H" + c + "H") - base; mw = Math.max(mw, adv[c]);
+        c = String.fromCharCode(1632 + i); adv[c] = w("H" + c + "H") - base; ma = Math.max(ma, adv[c]);
     }
-    dw = Math.max(dw, w("H-H") - base);
-    var sw = Math.max(w("H,H") - base, w("H.H") - base);
+    adv[","] = w("H,H") - base; adv["."] = w("H.H") - base; adv["-"] = w("H-H") - base;
     tmp.remove();
-    if (!(dw > 0)) dw = st.size * 0.6;
-    if (!(sw > 0)) sw = st.size * 0.3;
-    return { dw: Math.round(dw * 10) / 10, sw: Math.round(sw * 10) / 10 };
+    var fs0 = st.size > 0 ? st.size : 100;
+    if (!(mw > 0)) mw = fs0 * 0.6;
+    if (!(ma > 0)) ma = mw;
+    var dw = Math.max(arabic ? ma : mw, adv["-"] || 0);
+    var sw = Math.max(adv[","] || 0, adv["."] || 0);
+    if (!(sw > 0)) sw = fs0 * 0.3;
+    function nz(x) { return Math.round((x > 0 ? x : 0) * 100 / fs0 * 1000) / 1000; }
+    var nadv = {};
+    for (c in adv) if (adv.hasOwnProperty(c)) nadv[c] = nz(adv[c]);
+    return { dw: Math.round(dw * 10) / 10, sw: Math.round(sw * 10) / 10, fs0: fs0, adv: nadv, mw: nz(mw), ma: nz(ma) };
+}
+
+// ---------------- one-layer rig ----------------
+function textAnims(L) { return L.property("ADBE Text Properties").property("ADBE Text Animators"); }
+function addAnim(L, name, propMatch, val, selExpr) {
+    var an = textAnims(L).addProperty("ADBE Text Animator");
+    an.name = name;
+    var ix = an.propertyIndex;
+    function props() { return textAnims(L).property(ix).property("ADBE Text Animator Properties"); }
+    props().addProperty(propMatch);
+    var pr = props().property(propMatch);
+    try { pr.setValue(val); } catch (e) { if (val.length) props().property(propMatch).setValue([val[0], val[1]]); else throw e; }
+    if (propMatch === "ADBE Text Tracking Amount") {
+        try {
+            var tt = props().property("ADBE Text Track Type");
+            if (!tt) { props().addProperty("ADBE Text Track Type"); tt = props().property("ADBE Text Track Type"); }
+            tt.setValue(3);                                   // After
+        } catch (e2) {}
+    }
+    function sels() { return textAnims(L).property(ix).property("ADBE Text Selectors"); }
+    sels().addProperty("ADBE Text Expressible Selector");
+    sels().property(sels().numProperties).property("ADBE Text Expressible Amount").expression = selExpr;
+}
+function ensureSliderFx(L, name, v) { if (!getFx(L, name)) addSlider(L, name, v); }
+
+function buildTabular(L, ms, prefix, suffix) {
+    var A = textAnims(L);
+    for (var i = A.numProperties; i >= 1; i--) if (String(A.property(i).name).indexOf("SQ ") === 0) A.property(i).remove();
+    var T = 50000, P = Math.max(5000, Math.round(ms.fs0 * 50));
+    var head = tabHead(ms, prefix, suffix);
+    addAnim(L, "SQ Track Base", "ADBE Text Tracking Amount", -T, head + "\nisN?100:0;");
+    addAnim(L, "SQ Track", "ADBE Text Tracking Amount", 2 * T, selTrack(head, T));
+    addAnim(L, "SQ Shift Base", "ADBE Text Position 3D", [-P, 0, 0], "100;");
+    addAnim(L, "SQ Shift", "ADBE Text Position 3D", [2 * P, 0, 0], selShift(head, P));
+    L.property("Source Text").expression = singleTextExpr(prefix, suffix);
+    try { L.comment = "SQC:" + escape(prefix) + "|" + escape(suffix); } catch (e) {}
+}
+function storedAffixes(L) {
+    var m = String(L.comment || "").match(/^SQC:([^|]*)\|(.*)$/);
+    return m ? [unescape(m[1]), unescape(m[2])] : ["", ""];
 }
 
 // ---------------- easing ----------------
@@ -379,13 +492,14 @@ function createCounter(o) {
     try {
         var src = o.useSel ? findSourceText(comp) : null;
         var st = readStyle(src);
+        if (!fontOrAlert(st, o.font)) {  return; }
         var name = uniqueName(comp);
         SQ_LAST = name;
         var t0 = comp.time;
         var justs = [ParagraphJustification.LEFT_JUSTIFY, ParagraphJustification.CENTER_JUSTIFY, ParagraphJustification.RIGHT_JUSTIFY];
 
-        if (o.mode === 1) {
-            // ---------- single layer ----------
+        if (o.mode === 0) {
+            // ---------- one layer (tabular digits via text animators) ----------
             var T = comp.layers.addText("0");
             applyStyle(T, st, justs[o.align - 1]);
             T.name = name;
@@ -394,12 +508,16 @@ function createCounter(o) {
             else T.transform.position.setValue([comp.width / 2, comp.height / 2]);
             addNumberControls(T, o);
             addSymbolControls(T, o);
+            addDropdown(T, "Align", ["Left", "Center", "Right"], o.align);
+            addSlider(T, "Smooth Glide", o.glide);
+            addSlider(T, "Digit Width %", 100);
+            addSlider(T, "Tracking", 0);
             keyProgress(T, t0, o.dur, o.ease);
-            T.property("Source Text").expression = singleTextExpr(o.prefix, o.suffix);
+            buildTabular(T, measure(comp, st, o.arabic), o.prefix, o.suffix);
             if (src) src.enabled = false;
             T.selected = true;
         } else {
-            // ---------- zero-shake slots ----------
+            // ---------- per-digit layers ----------
             var ctrl = comp.layers.addNull();
             ctrl.name = name;
             ctrl.label = 9;
@@ -458,21 +576,35 @@ function updateCounter(o) {
         setFx(ctrl, "Comma From", o.from);
         setFx(ctrl, "Arabic Digits", o.arabic ? 1 : 0);
         addSymbolControls(ctrl, o);
-        if (getFx(ctrl, "Digit Width")) {
+        var justs = [ParagraphJustification.LEFT_JUSTIFY, ParagraphJustification.CENTER_JUSTIFY, ParagraphJustification.RIGHT_JUSTIFY];
+        if (isText(ctrl)) {
+            // one layer
+            if (!getFx(ctrl, "Align")) addDropdown(ctrl, "Align", ["Left", "Center", "Right"], o.align); else setFx(ctrl, "Align", o.align);
+            if (!getFx(ctrl, "Smooth Glide")) addSlider(ctrl, "Smooth Glide", o.glide); else setFx(ctrl, "Smooth Glide", o.glide);
+            ensureSliderFx(ctrl, "Digit Width %", 100);
+            ensureSliderFx(ctrl, "Tracking", 0);
+            var st1 = readStyle(ctrl);
+            if (!fontOrAlert(st1, o.font)) {  return; }
+            applyStyle(ctrl, st1, justs[o.align - 1]);
+            buildTabular(ctrl, measure(comp, st1, o.arabic), o.prefix, o.suffix);
+        } else {
             setFx(ctrl, "Align", o.align);
             setFx(ctrl, "Smooth Glide", o.glide);
             var slots = slotsOf(comp, ctrl);
             if (slots.length) {
-                var ms = measure(comp, readStyle(slots[0].layer), o.arabic);
+                var stA = readStyle(slots[0].layer);
+                if (!fontOrAlert(stA, o.font)) {  return; }
+                if (o.font) {
+                    var kids0 = childrenOf(comp, ctrl);
+                    for (var k0 = 0; k0 < kids0.length; k0++) applyStyle(kids0[k0], stA, kids0[k0].property("Source Text").value.justification);
+                }
+                var ms = measure(comp, stA, o.arabic);
                 setFx(ctrl, "Digit Width", ms.dw);
                 setFx(ctrl, "Separator Width", ms.sw);
                 addMissingSlots(comp, ctrl, neededSlots(o.start, o.end, o.dec, o.commas, o.from));
-                var stA = readStyle(slots[0].layer);
                 ensureAffix(comp, ctrl, stA, true, o.prefix);
                 ensureAffix(comp, ctrl, stA, false, o.suffix);
             }
-        } else {
-            ctrl.property("Source Text").expression = singleTextExpr(o.prefix, o.suffix);
         }
     } catch (e) {
         alert("Error: " + e.toString(), SCRIPT_NAME);
@@ -493,7 +625,7 @@ function applyStyleToCounter() {
     (function(){})("Squeezy Counter: Apply Style");
     try {
         var st = readStyle(src);
-        if (getFx(ctrl, "Digit Width")) {
+        if (!isText(ctrl)) {
             var kids = childrenOf(comp, ctrl);
             for (var k = 0; k < kids.length; k++) applyStyle(kids[k], st, kids[k].property("Source Text").value.justification);
             var ms = measure(comp, st, getFx(ctrl, "Arabic Digits").property(1).value > 0.5);
@@ -502,6 +634,10 @@ function applyStyleToCounter() {
             setFx(ctrl, "Affix Gap", Math.round(st.size * 0.12));
         } else {
             applyStyle(ctrl, st, ctrl.property("Source Text").value.justification);
+            if (getFx(ctrl, "Digit Width %")) {
+                var af = storedAffixes(ctrl);
+                buildTabular(ctrl, measure(comp, st, getFx(ctrl, "Arabic Digits").property(1).value > 0.5), af[0], af[1]);
+            }
         }
     } catch (e) {
         alert("Error: " + e.toString(), SCRIPT_NAME);
@@ -528,7 +664,8 @@ var o = {
     symbol: sqIdx(symbolLabels(), sqP("symbol", "None"), 0) + 1,
     side: sqIdx(SIDES, sqP("side", "Auto"), 0) + 1,
     prefix: String(sqP("prefix", "")), suffix: String(sqP("suffix", "")),
-    mode: String(sqP("mode", "Zero-Shake")).indexOf("Single") === 0 ? 1 : 0,
+    mode: String(sqP("mode", "One layer")).indexOf("Per") === 0 ? 1 : 0,
+    font: String(sqP("font", "")),
     align: sqIdx(["Left", "Center", "Right"], sqP("align", "Center"), 1) + 1,
     glide: Math.max(0, sqN("glide", 0.25)),
     useSel: sqB("useSelected", true)
@@ -545,4 +682,4 @@ if (act.indexOf("Apply") === 0) {
 }
 createCounter(o);
 return SQ_MSG || ("\u201C" + SQ_LAST + "\u201D counts " + fmtJS(o.start, o.dec, o.commas, o.from) + " \u2192 " + fmtJS(o.end, o.dec, o.commas, o.from) +
-    (o.mode === 0 ? ". Fine-tune it from the null's Effect Controls." : "."));
+    ". Fine-tune it from its Effect Controls.");
