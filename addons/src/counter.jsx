@@ -1,10 +1,11 @@
-// Squeezy add-on: Squeezy Counter v2 (original Squeezy code)
+// Squeezy add-on: Squeezy Counter v3 (original Squeezy code)
 // Shake-free number count in ONE text layer: text animators give every digit the same width. Commas, decimals,
 // Arabic digits and symbols (% $ AED ...). runs as function(params, comp, layers)
 var SQ_MSG = null, SQ_LAST = null;
 function alert(m) { SQ_MSG = String(m); }      // the panel shows the returned text instead of pop-ups
 
 var SCRIPT_NAME = "Squeezy Counter";
+var SQ_NOTE = null, SQ_LAST = null, SQ_RANGE = null;
 var BASE_NAME   = "Squeezy Counter";
 var SLIDER_MAX  = 1000000;   // AE slider control hard limit
 
@@ -405,11 +406,157 @@ function buildTabular(L, ms, prefix, suffix) {
     addAnim(L, "SQ Shift Base", "ADBE Text Position 3D", [-P, 0, 0], "100;");
     addAnim(L, "SQ Shift", "ADBE Text Position 3D", [2 * P, 0, 0], selShift(head, P));
     L.property("Source Text").expression = singleTextExpr(prefix, suffix);
-    try { L.comment = "SQC:" + escape(prefix) + "|" + escape(suffix); } catch (e) {}
+    var m = getMeta(L) || {};
+    m.pre = prefix; m.suf = suffix;
+    setMeta(L, m);
 }
-function storedAffixes(L) {
-    var m = String(L.comment || "").match(/^SQC:([^|]*)\|(.*)$/);
-    return m ? [unescape(m[1]), unescape(m[2])] : ["", ""];
+// counter memory, kept in the layer comment:  SQC:pre|suf|end|dec|from|arabic|comma
+var META_KEYS = ["pre", "suf", "end", "dec", "from", "arabic", "comma"];
+function getMeta(L) {
+    var c = "";
+    try { c = String(L.comment || ""); } catch (e) { return null; }
+    if (c.indexOf("SQC:") !== 0) return null;
+    var parts = c.substring(4).split("|"), m = {};
+    for (var i = 0; i < META_KEYS.length; i++) m[META_KEYS[i]] = i < parts.length ? unescape(parts[i]) : "";
+    return m;
+}
+function setMeta(L, m) {
+    var out = [];
+    for (var i = 0; i < META_KEYS.length; i++) out.push(escape(m[META_KEYS[i]] === undefined || m[META_KEYS[i]] === null ? "" : String(m[META_KEYS[i]])));
+    try { L.comment = "SQC:" + out.join("|"); } catch (e) {}
+}
+function storedAffixes(L) { var m = getMeta(L); return m ? [m.pre, m.suf] : ["", ""]; }
+
+// ---------------- number inside a text layer ----------------
+// "25,000"  "$1,250.50"  "+75%"  Arabic digits  ->  value, decimals, and the text around it
+function parseTextNumber(txt) {
+    txt = String(txt || "");
+    var norm = "", ar = false, i, c;
+    for (i = 0; i < txt.length; i++) {
+        c = txt.charCodeAt(i);
+        if (c >= 0x0660 && c <= 0x0669) { norm += String(c - 0x0660); ar = true; }
+        else if (c >= 0x06F0 && c <= 0x06F9) { norm += String(c - 0x06F0); ar = true; }
+        else if (c === 0x066C) norm += ",";
+        else if (c === 0x066B) norm += ".";
+        else norm += txt.charAt(i);
+    }
+    var re = /-?\d[\d,]*(\.\d+)?/, m = re.exec(norm);
+    if (!m) return null;
+    var raw = m[0].replace(/,+$/, ""), val = parseFloat(raw.replace(/,/g, ""));
+    if (isNaN(val)) return null;
+    var dot = raw.indexOf("."), dec = dot >= 0 ? raw.length - dot - 1 : 0;
+    return { value: val, dec: Math.min(3, dec), comma: raw.indexOf(",") >= 0, arabic: ar,
+             pre: txt.substring(0, m.index), suf: txt.substring(m.index + raw.length) };
+}
+function cloneOpts(o) { var r = {}; for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k]; return r; }
+// count to the number written in the text: end, decimals, commas and the text around it
+function optsFromText(o, info) {
+    var r = cloneOpts(o);
+    if (!info) return r;
+    r.end = info.value; r.dec = info.dec;
+    if (info.comma) { r.commas = true; if (Math.abs(info.value) < r.from) r.from = 1000; }
+    if (info.arabic) r.arabic = true;
+    r.prefix = o.prefix + info.pre; r.suffix = info.suf + o.suffix;
+    return r;
+}
+function metaFromOpts(r, info) {
+    return { pre: r.prefix, suf: r.suffix, end: info ? r.end : "", dec: info ? r.dec : "", from: info ? r.from : "",
+             arabic: info && r.arabic ? 1 : "", comma: info && info.comma ? 1 : "" };
+}
+function justToAlign(j) {
+    if (j === ParagraphJustification.LEFT_JUSTIFY) return 1;
+    if (j === ParagraphJustification.RIGHT_JUSTIFY) return 3;
+    if (j === ParagraphJustification.CENTER_JUSTIFY) return 2;
+    return 0;
+}
+
+// ---------------- font picker (fonts installed on this computer) ----------------
+function installedFonts() {
+    var out = [], all;
+    try { all = app.fonts.allFonts; } catch (e) { return null; }
+    if (!all) return null;
+    for (var i = 0; i < all.length; i++) for (var j = 0; j < all[i].length; j++) {
+        var f = all[i][j], label, ps;
+        try { ps = f.postScriptName; label = f.familyName + " " + f.styleName; } catch (e2) { continue; }
+        out.push({ label: label, ps: ps, key: fnorm(label + " " + ps) });
+    }
+    out.sort(function (a, b) { var x = a.label.toLowerCase(), y = b.label.toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
+    return out;
+}
+function pickFont(currentPs) {
+    var list = installedFonts();
+    if (!list || !list.length) { alert("Reading your fonts needs After Effects 2024 or newer.", SCRIPT_NAME); return null; }
+    var d = new Window("dialog", "Squeezy · Pick a font");
+    d.orientation = "column"; d.alignChildren = ["fill", "top"]; d.margins = 14; d.spacing = 8;
+    try { d.graphics.backgroundColor = d.graphics.newBrush(d.graphics.BrushType.SOLID_COLOR, [0.075, 0.075, 0.1, 1]); } catch (e) {}
+    var title = d.add("statictext", undefined, "SQUEEZY  ·  your fonts (" + list.length + ")");
+    try { title.graphics.font = ScriptUI.newFont("Arial", "BOLD", 13); title.graphics.foregroundColor = title.graphics.newPen(title.graphics.PenType.SOLID_COLOR, [0.75, 0.3, 1, 1], 1); } catch (e) {}
+    var search = d.add("edittext", undefined, ""); search.preferredSize = [340, 24];
+    search.helpTip = "Type part of the name, e.g. mont bold";
+    var lb = d.add("listbox", undefined, []); lb.preferredSize = [340, 380];
+    var info = d.add("statictext", undefined, ""); info.preferredSize.width = 340;
+    try { info.graphics.foregroundColor = info.graphics.newPen(info.graphics.PenType.SOLID_COLOR, [0.56, 0.56, 0.66, 1], 1); } catch (e) {}
+    var g = d.add("group"); g.alignment = ["right", "top"];
+    g.add("button", undefined, "Cancel", { name: "cancel" });
+    var ok = g.add("button", undefined, "Use font", { name: "ok" });
+    var LIMIT = 800;
+    function fill() {
+        var toks = String(search.text).toLowerCase().split(/\s+/), n = 0, sel = null;
+        lb.removeAll();
+        for (var i = 0; i < list.length && n < LIMIT; i++) {
+            var hit = true;
+            for (var t = 0; t < toks.length; t++) if (toks[t] && list[i].key.indexOf(fnorm(toks[t])) < 0) { hit = false; break; }
+            if (!hit) continue;
+            var it = lb.add("item", list[i].label); it.ps = list[i].ps; n++;
+            if (!sel && currentPs && list[i].ps === currentPs) sel = it;
+        }
+        info.text = n >= LIMIT ? "Showing " + LIMIT + " - type to narrow down" : n + " font" + (n === 1 ? "" : "s");
+        if (lb.items.length) lb.selection = sel || lb.items[0];
+    }
+    search.onChanging = fill;
+    lb.onDoubleClick = function () { d.close(1); };
+    ok.onClick = function () { d.close(1); };
+    fill();
+    try { search.active = true; } catch (e) {}
+    if (d.show() !== 1 || !lb.selection) return null;
+    return { ps: lb.selection.ps, label: lb.selection.text };
+}
+
+// pick a font and put it on the selected counter (or on a selected text layer)
+function pickFontAction() {
+    var comp = activeComp(); if (!comp) return null;
+    var ctrl = selectedCounter(comp), tgt = ctrl || findSourceText(comp), cur = null;
+    if (tgt && isText(tgt)) { try { cur = tgt.property("Source Text").value.font; } catch (e) {} }
+    else if (ctrl) { var sl = slotsOf(comp, ctrl); if (sl.length) try { cur = sl[0].layer.property("Source Text").value.font; } catch (e1) {} }
+    var f = pickFont(cur);
+    if (!f) return null;
+    if (!tgt) return f;
+    (function(){})("Squeezy Counter: Font");
+    try {
+        if (ctrl && !isText(ctrl)) {
+            var kids = childrenOf(comp, ctrl);
+            for (var k = 0; k < kids.length; k++) setFontOnly(kids[k], f.ps);
+            var slots = slotsOf(comp, ctrl);
+            if (slots.length) {
+                var ms = measure(comp, readStyle(slots[0].layer), getFx(ctrl, "Arabic Digits").property(1).value > 0.5);
+                setFx(ctrl, "Digit Width", ms.dw); setFx(ctrl, "Separator Width", ms.sw);
+            }
+        } else {
+            setFontOnly(tgt, f.ps);
+            if (ctrl && getFx(ctrl, "Digit Width %")) {
+                var af = storedAffixes(ctrl);
+                buildTabular(ctrl, measure(comp, readStyle(ctrl), getFx(ctrl, "Arabic Digits").property(1).value > 0.5), af[0], af[1]);
+            }
+        }
+    } catch (e2) { alert("Error: " + e2.toString(), SCRIPT_NAME); }
+    
+    return f;
+}
+function setFontOnly(L, ps) {
+    var p = L.property("Source Text"), td = p.value;
+    td.font = ps;
+    try { td.autoKernType = AutoKernType.NO_AUTO_KERN; } catch (e) {}
+    p.setValue(td);
 }
 
 // ---------------- easing ----------------
@@ -498,14 +645,32 @@ function createCounter(o) {
         var t0 = comp.time;
         var justs = [ParagraphJustification.LEFT_JUSTIFY, ParagraphJustification.CENTER_JUSTIFY, ParagraphJustification.RIGHT_JUSTIFY];
 
+        var info = (src && o.fromText) ? parseTextNumber(src.property("Source Text").value.text) : null;
+        o = optsFromText(o, info);
+        SQ_RANGE = fmtJS(o.start, o.dec, o.commas, o.from) + " \u2192 " + fmtJS(o.end, o.dec, o.commas, o.from);
+        if (src && o.fromText && !info) SQ_NOTE = "No number in the selected text, so it counts to " + fmtJS(o.end, o.dec, o.commas, o.from) + ".";
+
         if (o.mode === 0) {
             // ---------- one layer (tabular digits via text animators) ----------
-            var T = comp.layers.addText("0");
-            applyStyle(T, st, justs[o.align - 1]);
-            T.name = name;
-            T.label = 9;
-            if (src) { T.parent = src.parent; T.transform.position.setValue([src.transform.position.value[0], src.transform.position.value[1]]); }
-            else T.transform.position.setValue([comp.width / 2, comp.height / 2]);
+            var T;
+            if (src) {
+                // works directly on the user's own text layer: keeps its font, effects, alignment, animation
+                T = src;
+                var a0 = justToAlign(T.property("Source Text").value.justification);
+                if (a0) o.align = a0;
+                var p0 = T.property("Source Text"), td0 = p0.value;
+                if (o.font && st.font) td0.font = st.font;
+                try { td0.autoKernType = AutoKernType.NO_AUTO_KERN; } catch (eK) {}
+                p0.setValue(td0);
+                st = readStyle(T);
+            } else {
+                T = comp.layers.addText("0");
+                applyStyle(T, st, justs[o.align - 1]);
+                T.name = name;
+                T.label = 9;
+                T.transform.position.setValue([comp.width / 2, comp.height / 2]);
+            }
+            SQ_LAST = T.name;
             addNumberControls(T, o);
             addSymbolControls(T, o);
             addDropdown(T, "Align", ["Left", "Center", "Right"], o.align);
@@ -514,7 +679,8 @@ function createCounter(o) {
             addSlider(T, "Tracking", 0);
             keyProgress(T, t0, o.dur, o.ease);
             buildTabular(T, measure(comp, st, o.arabic), o.prefix, o.suffix);
-            if (src) src.enabled = false;
+            setMeta(T, metaFromOpts(o, info));
+            for (var s0 = 1; s0 <= comp.numLayers; s0++) comp.layer(s0).selected = false;
             T.selected = true;
         } else {
             // ---------- per-digit layers ----------
@@ -541,6 +707,7 @@ function createCounter(o) {
 
             ensureAffix(comp, ctrl, st, true, o.prefix);
             ensureAffix(comp, ctrl, st, false, o.suffix);
+            setMeta(ctrl, metaFromOpts(o, info));
             ctrl.moveToBeginning();
             if (src) src.enabled = false;
             for (var s = 1; s <= comp.numLayers; s++) comp.layer(s).selected = false;
@@ -567,6 +734,17 @@ function updateCounter(o) {
     if (!ctrl) { alert("Select a Squeezy Counter (its null or any of its layers).", SCRIPT_NAME); return; }
     (function(){})("Squeezy Counter: Update");
     try {
+        var meta = getMeta(ctrl) || {};
+        o = cloneOpts(o);
+        if (o.fromText && meta.end !== undefined && meta.end !== "") {
+            o.end = parseFloat(meta.end);
+            if (meta.dec !== "") o.dec = parseInt(meta.dec, 10) || 0;
+            if (meta.from !== "") o.from = parseFloat(meta.from);
+            if (meta.comma === "1") o.commas = true;
+            if (meta.arabic === "1") o.arabic = true;
+        }
+        if (o.prefix === "" && meta.pre) o.prefix = meta.pre;
+        if (o.suffix === "" && meta.suf) o.suffix = meta.suf;
         var m = multiplierFor(o.start, o.end);
         setFx(ctrl, "Multiplier", m);
         setFx(ctrl, "Start", o.start / m);
@@ -666,12 +844,17 @@ var o = {
     prefix: String(sqP("prefix", "")), suffix: String(sqP("suffix", "")),
     mode: String(sqP("mode", "One layer")).indexOf("Per") === 0 ? 1 : 0,
     font: String(sqP("font", "")),
+    fromText: sqB("fromText", true),
     align: sqIdx(["Left", "Center", "Right"], sqP("align", "Center"), 1) + 1,
     glide: Math.max(0, sqN("glide", 0.25)),
     useSel: sqB("useSelected", true)
 };
 
 var act = String(sqP("action", "Create counter"));
+if (act.indexOf("Pick") === 0) {
+    var pf = pickFontAction();
+    return SQ_MSG || (pf ? "Font: " + pf.label + (selectedCounter(comp) ? " (counter re-measured)" : "") : "No font picked.");
+}
 if (act.indexOf("Update") === 0) {
     updateCounter(o);
     return SQ_MSG || "Counter updated.";
@@ -681,5 +864,6 @@ if (act.indexOf("Apply") === 0) {
     return SQ_MSG || "Style applied to the counter.";
 }
 createCounter(o);
-return SQ_MSG || ("\u201C" + SQ_LAST + "\u201D counts " + fmtJS(o.start, o.dec, o.commas, o.from) + " \u2192 " + fmtJS(o.end, o.dec, o.commas, o.from) +
+if (SQ_MSG) return SQ_MSG;
+return (SQ_NOTE ? SQ_NOTE + " " : "") + ("\u201C" + SQ_LAST + "\u201D counts " + (SQ_RANGE || (fmtJS(o.start, o.dec, o.commas, o.from) + " \u2192 " + fmtJS(o.end, o.dec, o.commas, o.from))) +
     ". Fine-tune it from its Effect Controls.");

@@ -1,11 +1,11 @@
 {
   "id": "squeezy-counter",
   "name": "Squeezy Counter",
-  "version": 2,
+  "version": 3,
   "order": 6,
   "status": "ready",
   "requires": "2.0",
-  "description": "Shake-free number count in one text layer: every digit gets the same width, so the number never jitters as it grows. Any font, commas from 10,000, decimals, Arabic digits and symbols like % $ AED.",
+  "description": "Select your text layer (e.g. 25,000) and press Count: it counts from 0 to that number on the same layer, with no shaking. Pick any installed font, commas from 10,000, decimals, Arabic digits, symbols like % $ AED.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 20v-4M9 20v-8M14 20v-12\"/><path d=\"M18 9l2-2 2 2M20 7v9\"/></svg>",
   "colors": [
     "#5B6CFF",
@@ -22,9 +22,22 @@
       "options": [
         "Create counter",
         "Update selected",
+        "Pick font…",
         "Apply style (counter + text)"
       ],
       "value": "Create counter"
+    },
+    {
+      "id": "useSelected",
+      "label": "Use my selected text layer",
+      "type": "checkbox",
+      "value": true
+    },
+    {
+      "id": "fromText",
+      "label": "Count to the number written in it",
+      "type": "checkbox",
+      "value": true
     },
     {
       "id": "start",
@@ -34,7 +47,7 @@
     },
     {
       "id": "end",
-      "label": "End",
+      "label": "End (if no text selected)",
       "type": "text",
       "value": "25000"
     },
@@ -62,22 +75,10 @@
     },
     {
       "id": "font",
-      "label": "Font",
+      "label": "Font (or Do → Pick font…)",
       "type": "text",
       "value": "",
       "placeholder": "e.g. Montserrat Bold (empty = selected text)"
-    },
-    {
-      "id": "decimals",
-      "label": "Decimals",
-      "type": "select",
-      "options": [
-        "0",
-        "1",
-        "2",
-        "3"
-      ],
-      "value": "0"
     },
     {
       "id": "symbol",
@@ -119,6 +120,18 @@
       "value": "Auto"
     },
     {
+      "id": "decimals",
+      "label": "Decimals",
+      "type": "select",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "value": "0"
+    },
+    {
       "id": "commas",
       "label": "Commas",
       "type": "checkbox",
@@ -150,12 +163,6 @@
         "Right"
       ],
       "value": "Center"
-    },
-    {
-      "id": "useSelected",
-      "label": "Use selected text (font + position)",
-      "type": "checkbox",
-      "value": true
     },
     {
       "id": "prefix",
