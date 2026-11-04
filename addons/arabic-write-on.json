@@ -1,0 +1,66 @@
+{
+  "id": "arabic-write-on",
+  "name": "Arabic Write-On",
+  "version": 1,
+  "order": 1.5,
+  "status": "ready",
+  "requires": "3.1",
+  "description": "Select Arabic text, type the duration, press Write. A Stroke draws every joined piece right to left; dots, hamza, shadda and harakat pop in when the pen reaches them. Works with any font and several lines.",
+  "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 13c-2 3-5 3-7 1s-4-2-6 0-3 3-4 2\"/><path d=\"M17 6l3-3 1 1-3 3z\"/><circle cx=\"9\" cy=\"20\" r=\"1.2\" fill=\"currentColor\"/></svg>",
+  "colors": [
+    "#18B47B",
+    "#2FD3FF"
+  ],
+  "include": [],
+  "scriptFile": "writeon.jsx",
+  "panelFile": "writeon.panel.js",
+  "runLabel": "Write",
+  "params": [
+    {
+      "id": "action",
+      "label": "Do",
+      "type": "select",
+      "options": [
+        "Write on",
+        "Remove"
+      ],
+      "value": "Write on"
+    },
+    {
+      "id": "duration",
+      "label": "Duration (seconds)",
+      "type": "text",
+      "value": "2",
+      "placeholder": "e.g. 2.5"
+    },
+    {
+      "id": "bounce",
+      "label": "Bounce on dots",
+      "type": "checkbox",
+      "value": false
+    },
+    {
+      "id": "pop",
+      "label": "Dot pop time",
+      "type": "slider",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "value": 0.3,
+      "unit": "s",
+      "advanced": true
+    },
+    {
+      "id": "brush",
+      "label": "Brush size",
+      "type": "slider",
+      "min": 50,
+      "max": 200,
+      "step": 5,
+      "value": 100,
+      "unit": "%",
+      "advanced": true
+    }
+  ],
+  "previewFile": "writeon.preview.js"
+}

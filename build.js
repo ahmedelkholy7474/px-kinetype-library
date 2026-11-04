@@ -42,6 +42,8 @@ var addons = fs.existsSync(addonDir) ? fs.readdirSync(addonDir).filter(function 
       delete a.scriptFile; delete a.include; delete a.assets;
     }
     if (a.previewFile) { a.preview = fs.readFileSync(path.join(addonDir, "src", a.previewFile), "utf8"); delete a.previewFile; }
+    // "panelFile": JS that runs in the panel (body of function(api)) and drives the host script itself
+    if (a.panelFile) { a.panel = fs.readFileSync(path.join(addonDir, "src", a.panelFile), "utf8"); delete a.panelFile; }
     return a;
   })
   .sort(function (a, b) { return (a.order || 999) - (b.order || 999); }) : [];
