@@ -8,7 +8,7 @@
    "mode": "smart"
   }
  },
- "updated": "2026-11-04T16:42:18.458Z",
+ "updated": "2026-11-04T18:36:04.839Z",
  "categories": [
   {
    "id": "all",
@@ -741,7 +741,7 @@
    "id": "color-word-glide",
    "name": "Color Word Glide",
    "category": "kinetic",
-   "version": 1,
+   "version": 2,
    "order": 9,
    "added": "2026-11-04",
    "source": "8d5b454b_720w.mp4",
@@ -846,7 +846,8 @@
         12,
         12
        ]
-      }
+      },
+      "order": "backward"
      },
      {
       "name": "Drift",
@@ -860,7 +861,8 @@
         18,
         0
        ]
-      }
+      },
+      "order": "backward"
      }
     ]
    }
@@ -1798,6 +1800,97 @@
     "length": 0.25,
     "blur": 4,
     "amount": 90
+   }
+  },
+  {
+   "id": "word-drop-zoom",
+   "name": "Word Drop Zoom",
+   "category": "clean",
+   "version": 1,
+   "order": 31,
+   "added": "2026-11-04",
+   "source": "Text_1.mp4",
+   "requires": "2.5",
+   "seed": 137,
+   "grouping": "lines",
+   "in": {
+    "animators": [
+     {
+      "name": "Rise",
+      "basedOn": "words",
+      "stagger": 0.12,
+      "dur": 0.5,
+      "ease": "outQuart",
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        62
+       ]
+      }
+     },
+     {
+      "name": "Focus",
+      "basedOn": "words",
+      "stagger": 0.12,
+      "dur": 0.4,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        16,
+        16
+       ]
+      }
+     },
+     {
+      "name": "Settle",
+      "basedOn": "lines",
+      "dur": 1,
+      "ease": "outCubic",
+      "envelope": "from",
+      "props": {
+       "scale": [
+        125,
+        125
+       ]
+      }
+     }
+    ]
+   },
+   "out": {
+    "animators": [
+     {
+      "name": "Dim",
+      "basedOn": "words",
+      "stagger": 0.14,
+      "dur": 0.3,
+      "ease": "inOutSine",
+      "envelope": "from",
+      "props": {
+       "opacity": 0,
+       "blur": [
+        6,
+        6
+       ]
+      }
+     },
+     {
+      "name": "Sink",
+      "basedOn": "words",
+      "stagger": 0.14,
+      "dur": 0.3,
+      "ease": "inCubic",
+      "envelope": "from",
+      "props": {
+       "position": [
+        0,
+        12
+       ]
+      }
+     }
+    ]
    }
   },
   {

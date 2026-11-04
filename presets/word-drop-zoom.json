@@ -1,0 +1,91 @@
+{
+  "id": "word-drop-zoom",
+  "name": "Word Drop Zoom",
+  "category": "clean",
+  "version": 1,
+  "order": 31,
+  "added": "2026-11-04",
+  "source": "Text_1.mp4",
+  "requires": "2.5",
+  "seed": 137,
+  "grouping": "lines",
+  "in": {
+    "animators": [
+      {
+        "name": "Rise",
+        "basedOn": "words",
+        "stagger": 0.12,
+        "dur": 0.5,
+        "ease": "outQuart",
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            62
+          ]
+        }
+      },
+      {
+        "name": "Focus",
+        "basedOn": "words",
+        "stagger": 0.12,
+        "dur": 0.4,
+        "ease": "inOutSine",
+        "envelope": "from",
+        "props": {
+          "opacity": 0,
+          "blur": [
+            16,
+            16
+          ]
+        }
+      },
+      {
+        "name": "Settle",
+        "basedOn": "lines",
+        "dur": 1.0,
+        "ease": "outCubic",
+        "envelope": "from",
+        "props": {
+          "scale": [
+            125,
+            125
+          ]
+        }
+      }
+    ]
+  },
+  "out": {
+    "animators": [
+      {
+        "name": "Dim",
+        "basedOn": "words",
+        "stagger": 0.14,
+        "dur": 0.3,
+        "ease": "inOutSine",
+        "envelope": "from",
+        "props": {
+          "opacity": 0,
+          "blur": [
+            6,
+            6
+          ]
+        }
+      },
+      {
+        "name": "Sink",
+        "basedOn": "words",
+        "stagger": 0.14,
+        "dur": 0.3,
+        "ease": "inCubic",
+        "envelope": "from",
+        "props": {
+          "position": [
+            0,
+            12
+          ]
+        }
+      }
+    ]
+  }
+}
