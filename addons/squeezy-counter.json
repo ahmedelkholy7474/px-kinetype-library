@@ -1,11 +1,11 @@
 {
   "id": "squeezy-counter",
   "name": "Squeezy Counter",
-  "version": 3,
+  "version": 4,
   "order": 6,
   "status": "ready",
   "requires": "2.0",
-  "description": "Select your text layer (e.g. 25,000) and press Count: it counts from 0 to that number on the same layer, with no shaking. Pick any installed font, commas from 10,000, decimals, Arabic digits, symbols like % $ AED.",
+  "description": "Select your number text layer (e.g. 25,000) and press Count: it counts up from 0 on the same layer, without shaking. Everything else is under Advanced.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 20v-4M9 20v-8M14 20v-12\"/><path d=\"M18 9l2-2 2 2M20 7v9\"/></svg>",
   "colors": [
     "#5B6CFF",
@@ -20,36 +20,12 @@
       "label": "Do",
       "type": "select",
       "options": [
-        "Create counter",
-        "Update selected",
+        "Count",
+        "Update selected counter",
         "Pick font…",
-        "Apply style (counter + text)"
+        "Apply text style to counter"
       ],
-      "value": "Create counter"
-    },
-    {
-      "id": "useSelected",
-      "label": "Use my selected text layer",
-      "type": "checkbox",
-      "value": true
-    },
-    {
-      "id": "fromText",
-      "label": "Count to the number written in it",
-      "type": "checkbox",
-      "value": true
-    },
-    {
-      "id": "start",
-      "label": "Start",
-      "type": "text",
-      "value": "0"
-    },
-    {
-      "id": "end",
-      "label": "End (if no text selected)",
-      "type": "text",
-      "value": "25000"
+      "value": "Count"
     },
     {
       "id": "duration",
@@ -60,25 +36,6 @@
       "step": 0.1,
       "value": 2,
       "unit": "s"
-    },
-    {
-      "id": "easing",
-      "label": "Easing",
-      "type": "select",
-      "options": [
-        "Smooth Stop",
-        "Ease In-Out",
-        "Linear",
-        "Expo Out"
-      ],
-      "value": "Smooth Stop"
-    },
-    {
-      "id": "font",
-      "label": "Font (or Do → Pick font…)",
-      "type": "text",
-      "value": "",
-      "placeholder": "e.g. Montserrat Bold (empty = selected text)"
     },
     {
       "id": "symbol",
@@ -109,6 +66,32 @@
       "value": "None"
     },
     {
+      "id": "easing",
+      "label": "Easing",
+      "type": "select",
+      "options": [
+        "Smooth Stop",
+        "Ease In-Out",
+        "Linear",
+        "Expo Out"
+      ],
+      "value": "Smooth Stop"
+    },
+    {
+      "id": "start",
+      "label": "Start from",
+      "type": "text",
+      "value": "0",
+      "advanced": true
+    },
+    {
+      "id": "end",
+      "label": "Count to (if the layer has no number)",
+      "type": "text",
+      "value": "25000",
+      "advanced": true
+    },
+    {
       "id": "side",
       "label": "Symbol side",
       "type": "select",
@@ -117,7 +100,8 @@
         "Left",
         "Right"
       ],
-      "value": "Auto"
+      "value": "Auto",
+      "advanced": true
     },
     {
       "id": "decimals",
@@ -129,19 +113,22 @@
         "2",
         "3"
       ],
-      "value": "0"
+      "value": "0",
+      "advanced": true
     },
     {
       "id": "commas",
       "label": "Commas",
       "type": "checkbox",
-      "value": true
+      "value": true,
+      "advanced": true
     },
     {
       "id": "commaFrom",
       "label": "Commas from",
       "type": "text",
-      "value": "10000"
+      "value": "10000",
+      "advanced": true
     },
     {
       "id": "digits",
@@ -151,7 +138,8 @@
         "Western 123",
         "Arabic ١٢٣"
       ],
-      "value": "Western 123"
+      "value": "Western 123",
+      "advanced": true
     },
     {
       "id": "align",
@@ -162,7 +150,30 @@
         "Center",
         "Right"
       ],
-      "value": "Center"
+      "value": "Center",
+      "advanced": true
+    },
+    {
+      "id": "font",
+      "label": "Font (empty = your text layer's font)",
+      "type": "text",
+      "value": "",
+      "placeholder": "e.g. Montserrat Bold (empty = selected text)",
+      "advanced": true
+    },
+    {
+      "id": "useSelected",
+      "label": "Use my selected text layer",
+      "type": "checkbox",
+      "value": true,
+      "advanced": true
+    },
+    {
+      "id": "fromText",
+      "label": "Read the number from the layer",
+      "type": "checkbox",
+      "value": true,
+      "advanced": true
     },
     {
       "id": "prefix",

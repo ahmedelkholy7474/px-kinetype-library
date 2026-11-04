@@ -1,11 +1,11 @@
 {
   "id": "proximity",
   "name": "Squeezy Proximity",
-  "version": 3,
+  "version": 4,
   "order": 5,
   "status": "ready",
-  "requires": "2.0",
-  "description": "Pick a look, press Apply, then move the effector: the layers near it react. Fine-tune and switch effects on/off from the controller.",
+  "requires": "3.0",
+  "description": "Pick one or more looks, press Go, then move the effector: the layers near it react. The preview shows what your looks do.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"2.5\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"6\" opacity=\".6\"/><circle cx=\"12\" cy=\"12\" r=\"9.5\" opacity=\".3\"/></svg>",
   "colors": [
     "#7B5CFF",
@@ -30,9 +30,9 @@
       "value": "Apply"
     },
     {
-      "id": "look",
-      "label": "Look",
-      "type": "select",
+      "id": "looks",
+      "label": "Looks (pick one or more)",
+      "type": "multi",
       "options": [
         "Magnify",
         "Shrink",
@@ -45,7 +45,9 @@
         "Color",
         "Pop"
       ],
-      "value": "Magnify"
+      "value": [
+        "Magnify"
+      ]
     },
     {
       "id": "radius",
@@ -81,6 +83,14 @@
       "type": "text",
       "value": "#2FF3FF",
       "advanced": true
+    },
+    {
+      "id": "invert",
+      "label": "Invert (far layers react)",
+      "type": "checkbox",
+      "value": false,
+      "advanced": true
     }
-  ]
+  ],
+  "previewFile": "proximity.preview.js"
 }

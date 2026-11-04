@@ -2,59 +2,8 @@
   "id": "gravity-drop",
   "name": "Gravity Drop",
   "category": "clean",
-  "version": 1,
-  "order": 29,
-  "added": "2026-11-02",
-  "source": "Clean & Echo pack",
-  "requires": "2.5",
-  "seed": 257,
-  "in": {
-    "animators": [
-      {
-        "name": "Drop",
-        "basedOn": "chars",
-        "start": 0,
-        "stagger": 0.03,
-        "dur": 1.25,
-        "envelope": "from",
-        "props": {
-          "position": [
-            0,
-            -120
-          ]
-        },
-        "ease": "outBounce"
-      },
-      {
-        "name": "Fade",
-        "basedOn": "chars",
-        "start": 0,
-        "stagger": 0.03,
-        "dur": 0.25,
-        "envelope": "from",
-        "props": {
-          "opacity": 0
-        },
-        "ease": "inOutSine"
-      },
-      {
-        "name": "Focus",
-        "basedOn": "chars",
-        "start": 0,
-        "stagger": 0.03,
-        "dur": 0.45,
-        "envelope": "from",
-        "props": {
-          "blur": [
-            10,
-            10
-          ]
-        },
-        "ease": "outCubic"
-      }
-    ]
-  },
-  "out": {
-    "mirror": true
-  }
+  "version": 2,
+  "status": "removed",
+  "requires": "3.0",
+  "note": "Removed in 3.0: near-duplicate of another preset (pick Letter / Word / Line in Animate by instead)."
 }

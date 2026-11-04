@@ -12,6 +12,7 @@ var presets = fs.readdirSync(presetDir)
   .filter(function (f) { return /\.json$/.test(f); })
   .map(function (f) {
     var p = JSON.parse(fs.readFileSync(path.join(presetDir, f), "utf8"));
+    if (p.status === "removed") return p;   // tombstone: tells older caches to drop this preset
     ["id", "name", "category", "in"].forEach(function (k) {
       if (!p[k]) throw new Error(f + ": missing '" + k + "'");
     });
@@ -40,6 +41,7 @@ var addons = fs.existsSync(addonDir) ? fs.readdirSync(addonDir).filter(function 
       })).join("\n");
       delete a.scriptFile; delete a.include; delete a.assets;
     }
+    if (a.previewFile) { a.preview = fs.readFileSync(path.join(addonDir, "src", a.previewFile), "utf8"); delete a.previewFile; }
     return a;
   })
   .sort(function (a, b) { return (a.order || 999) - (b.order || 999); }) : [];

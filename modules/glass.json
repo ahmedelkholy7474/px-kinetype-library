@@ -1,6 +1,6 @@
 {
   "id": "glass",
-  "version": 7,
+  "version": 8,
   "scriptFile": "glass.jsx",
-  "changes": "New: Reeded (fluted) glass. Reed Bend / Width / Angle / Shade on the Controller"
+  "changes": "Apple glass look: thin dark outline and light pooling on the side away from the light (new Outline and Bottom Light controls)."
 }

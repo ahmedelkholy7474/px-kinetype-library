@@ -10,7 +10,8 @@ var GLASS_CTRL = [
     ["SQ Glass Tint Amount", 12], ["SQ Glass Highlight", 70], ["SQ Glass Rim", 85], ["SQ Glass Rim Width", 1.6],
     ["SQ Glass Light Angle", 135], ["SQ Glass Inner Shadow", 35], ["SQ Glass Darken", 0], ["SQ Glass Grain", 0],
     ["SQ Glass Shadow", 35],
-    ["SQ Glass Reed Bend", 0], ["SQ Glass Reed Width", 40], ["SQ Glass Reed Angle", 0], ["SQ Glass Reed Shade", 35]
+    ["SQ Glass Reed Bend", 0], ["SQ Glass Reed Width", 40], ["SQ Glass Reed Angle", 0], ["SQ Glass Reed Shade", 35],
+    ["SQ Glass Outline", 0], ["SQ Glass Bottom Light", 0]
 ];
 var GLASS_TINT = "SQ Glass Tint";
 function sqFolder(name) {
@@ -111,7 +112,7 @@ function glassOne(comp, S, o, folder) {
         return c;
     }
     // band just inside the edge, shaded by two ramps: bright toward the light, softer opposite
-    function bandComp(name, widthExpr, blurExpr, oppositeShare) {
+    function bandComp(name, widthExpr, blurExpr, oppositeShare, flip) {
         var c = newComp(name);
         var M = shapeIn(c, [1, 1, 1, 1]);
         M.name = "inner";
@@ -125,6 +126,7 @@ function glassOne(comp, S, o, folder) {
             R.name = lit[r][0];
             var rp = fxAdd(R, "ADBE Ramp");
             var sg = lit[r][1];
+            if (flip) sg = sg ? "" : "-";
             gexpr(rp.property(1), "[thisComp.width/2 " + sg + "+ " + LX + "*thisComp.width/2, thisComp.height/2 " + sg + "+ " + LY + "*thisComp.height/2]");
             try { gfx(R).property(2).property(2).setValue([1, 1, 1, 1]); } catch (e1) {}
             gexpr(gfx(R).property(2).property(3), "[thisComp.width/2 " + (sg ? "+" : "-") + " " + LX + "*thisComp.width/2, thisComp.height/2 " + (sg ? "+" : "-") + " " + LY + "*thisComp.height/2]");
@@ -196,6 +198,8 @@ function glassOne(comp, S, o, folder) {
     var rc = bandComp("SQ Glass Rim \u00B7 " + base, "Math.max(" + CTL("SQ Glass Rim Width") + ", 0.2)", "", 55);
     var cc = chromaComp("SQ Glass Chroma \u00B7 " + base);
     var gc = bandComp("SQ Glass Glow \u00B7 " + base, "Math.max(" + CTL("SQ Glass Bevel") + "*0.55, 1)", "Math.max(" + CTL("SQ Glass Bevel") + "*0.35, 1)", 45);
+    // light pooling inside the edge on the side away from the light (Apple glass icons)
+    var pc = bandComp("SQ Glass Pool \u00B7 " + base, "Math.max(" + CTL("SQ Glass Bevel") + "*0.8, 1)", "Math.max(" + CTL("SQ Glass Bevel") + "*0.5, 1)", 0, true);
     // inner shadow: dark rim map (white shape on black, blurred) shifted toward the light
     var ic = newComp("SQ Glass Inner \u00B7 " + base);
     ic.layers.addSolid([0, 0, 0], "black", ic.width, ic.height, ic.pixelAspect, ic.duration);
@@ -270,6 +274,15 @@ function glassOne(comp, S, o, folder) {
     var GLO = overlay(gc, BlendingMode.SCREEN, GL + '.effect("SQ Glass Highlight")(1)*0.8'); GLO.moveBefore(INN);
     var RM = overlay(rc, BlendingMode.SCREEN, GL + '.effect("SQ Glass Rim")(1)'); RM.moveBefore(GLO);
     var CH = overlay(cc, BlendingMode.SCREEN, GL + '.effect("SQ Glass Dispersion")(1)*0.7'); CH.moveBefore(RM);
+    var PO = overlay(pc, BlendingMode.SCREEN, "clamp(" + GL + '.effect("SQ Glass Bottom Light")(1), 0, 100)'); PO.moveBefore(GLO);
+    // thin dark outline just outside the shape: the shape grown by ~2 px, minus the shape itself
+    var OL = comp.layers.add(shapeComp); OL.name = "SQ Glass Outline \u00B7 " + base;
+    var olf = fxAdd(OL, "ADBE Fill"); try { olf.property(3).setValue([0.05, 0.07, 0.1, 1]); } catch (eo1) {}
+    fxAdd(OL, "ADBE Simple Choker", "SQ Outline Grow");
+    try { gfx(OL).property("SQ Outline Grow").property(2).setValue(-2); } catch (eo2) {}
+    gexpr(OL.property("ADBE Transform Group").property("ADBE Opacity"), "clamp(" + GL + '.effect("SQ Glass Outline")(1), 0, 100)*0.8');
+    OL.setTrackMatte(P, TrackMatteType.ALPHA_INVERTED);
+    OL.moveBefore(CH);
     // rib shading: each flute darker on one side, lighter on the other
     var RS = overlay(rd, BlendingMode.SOFT_LIGHT, "(" + GL + '.effect("SQ Glass Reed Bend")(1) > 0) ? ' + GL + '.effect("SQ Glass Reed Shade")(1) : 0'); RS.moveBefore(TI);
 
@@ -283,7 +296,7 @@ function glassOne(comp, S, o, folder) {
     gexpr(SH.property("ADBE Transform Group").property("ADBE Position"), "value + [0, " + SC + "*0.35]");
 
     P.enabled = false;
-    var all = [A, TI, SHD, INN, GLO, RM, CH, SH, P, MX, MY, RD, RS, C];
+    var all = [A, TI, SHD, INN, GLO, RM, CH, PO, OL, SH, P, MX, MY, RD, RS, C];
     for (var z = 0; z < all.length; z++) { try { all[z].inPoint = tin; all[z].outPoint = tout; } catch (e13) {} }
     P.comment = "Squeezy Glass: double-click to edit the shape. Move it with " + ctlName;
 
@@ -321,7 +334,7 @@ function glassOne(comp, S, o, folder) {
     }
 
     C.moveToBeginning();
-    var helpers = [A, TI, SHD, INN, GLO, RM, CH, SH, MX, MY, RD, RS];
+    var helpers = [A, TI, SHD, INN, GLO, RM, CH, PO, OL, SH, MX, MY, RD, RS];
     for (var h = 0; h < helpers.length; h++) { try { helpers[h].shy = true; helpers[h].label = 0; } catch (e14) {} }
     try { P.label = 0; } catch (e16) {}
     try { comp.hideShyLayers = true; } catch (e17) {}

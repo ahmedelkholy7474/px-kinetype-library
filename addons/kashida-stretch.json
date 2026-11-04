@@ -1,10 +1,10 @@
 {
   "id": "kashida-stretch",
   "name": "Kashida Stretch",
-  "version": 3,
+  "version": 4,
   "order": 1,
   "status": "ready",
-  "description": "Arabic text: the kashida stretches out (خولي ← خــــولي) with a light bounce, and can fold back at the end.",
+  "description": "Arabic text: the kashida stretches the word (خولي ← خــــولي). Stretch amount, Pivot, Stretch direction and Bilateral push live in Effect Controls, ready to keyframe.",
   "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M3 14h4M17 14h4M7 14c2 0 2-4 5-4s3 4 5 4\"/></svg>",
   "colors": [
     "#E0703A",
@@ -17,24 +17,65 @@
   "runLabel": "Stretch",
   "params": [
     {
-      "id": "position",
-      "label": "Where",
+      "id": "action",
+      "label": "Do",
       "type": "select",
       "options": [
-        "Middle of each word",
-        "After first letter",
-        "Longest word only",
-        "Every connection"
+        "Apply",
+        "Remove"
       ],
-      "value": "Middle of each word"
+      "value": "Apply"
     },
     {
       "id": "amount",
-      "label": "Kashida length",
+      "label": "Stretch amount",
       "type": "slider",
       "min": 1,
-      "max": 20,
+      "max": 40,
       "value": 6
+    },
+    {
+      "id": "pivot",
+      "label": "Pivot",
+      "type": "slider",
+      "min": 0,
+      "max": 100,
+      "value": 50,
+      "unit": "%"
+    },
+    {
+      "id": "direction",
+      "label": "Stretch direction",
+      "type": "select",
+      "options": [
+        "Left",
+        "Right"
+      ],
+      "value": "Left"
+    },
+    {
+      "id": "bilateral",
+      "label": "Bilateral push",
+      "type": "checkbox",
+      "value": false
+    },
+    {
+      "id": "animate",
+      "label": "Animate it in",
+      "type": "checkbox",
+      "value": true
+    },
+    {
+      "id": "words",
+      "label": "Words",
+      "type": "select",
+      "options": [
+        "Each word",
+        "Longest word only",
+        "Every joint"
+      ],
+      "value": "Each word",
+      "advanced": true
     },
     {
       "id": "duration",
@@ -42,9 +83,10 @@
       "type": "slider",
       "min": 0.1,
       "max": 3,
-      "step": 0.05,
+      "step": 0.1,
       "value": 0.6,
-      "unit": "s"
+      "unit": "s",
+      "advanced": true
     },
     {
       "id": "bounce",
@@ -53,23 +95,15 @@
       "min": 0,
       "max": 100,
       "value": 40,
-      "unit": "%"
-    },
-    {
-      "id": "delay",
-      "label": "Delay",
-      "type": "slider",
-      "min": 0,
-      "max": 5,
-      "step": 0.1,
-      "value": 0,
-      "unit": "s"
+      "unit": "%",
+      "advanced": true
     },
     {
       "id": "collapse",
-      "label": "Fold back at end",
+      "label": "Fold back at the end",
       "type": "checkbox",
-      "value": true
+      "value": true,
+      "advanced": true
     }
   ],
   "requires": "2.0"

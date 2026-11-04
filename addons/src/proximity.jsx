@@ -9,19 +9,29 @@ var MAXEFF = 10;
 var act = String(params.action || "Apply");
 
 // Look -> which boxes start ON and their amounts
+// Looks: which boxes switch ON and their amounts. Several looks can be mixed.
+//   Opacity %: + = far layers fade (near stays solid, "Reveal")   - = near layers fade
+//   Blur px:   + = near layers blur                               - = far layers blur ("Focus")
 var LOOKS = {
-    "Magnify":   { invert: 0, on: { scale: 1 }, scale: 60 },
-    "Shrink":    { invert: 0, on: { scale: 1 }, scale: -60 },
-    "Reveal":    { invert: 1, on: { opacity: 1 }, opacity: -100 },
-    "Fade out":  { invert: 0, on: { opacity: 1 }, opacity: -100 },
-    "Push away": { invert: 0, on: { position: 1 }, position: 120 },
-    "Pull in":   { invert: 0, on: { position: 1 }, position: -120 },
-    "Spin":      { invert: 0, on: { rotation: 1 }, rotation: 180 },
-    "Focus":     { invert: 1, on: { blur: 1 }, blur: 30 },
-    "Color":     { invert: 0, on: { color: 1 } },
-    "Pop":       { invert: 0, on: { scale: 1, rotation: 1, color: 1 }, scale: 50, rotation: 20 }
+    "Magnify":   { on: { scale: 1 }, scale: 60 },
+    "Shrink":    { on: { scale: 1 }, scale: -60 },
+    "Reveal":    { on: { opacity: 1 }, opacity: 100 },
+    "Fade out":  { on: { opacity: 1 }, opacity: -100 },
+    "Push away": { on: { position: 1 }, position: 120 },
+    "Pull in":   { on: { position: 1 }, position: -120 },
+    "Spin":      { on: { rotation: 1 }, rotation: 180 },
+    "Focus":     { on: { blur: 1 }, blur: -30 },
+    "Color":     { on: { color: 1 } },
+    "Pop":       { on: { scale: 1, rotation: 1, color: 1 }, scale: 50, rotation: 20 }
 };
-
+function lookList() {
+    var l = params.looks;
+    if (!(l instanceof Array)) l = l ? String(l).split(",") : [];
+    if (!l.length && params.look) l = [String(params.look)];          // panels before 3.0
+    var out = [];
+    for (var i = 0; i < l.length; i++) if (LOOKS[l[i]]) out.push(l[i]);
+    return out.length ? out : ["Magnify"];
+}
 function q(s) { return String(s).replace(/\\/g, "\\\\").replace(/"/g, "\\\""); }
 function byName(n) { for (var i = 1; i <= comp.numLayers; i++) if (comp.layer(i).name === n) return comp.layer(i); return null; }
 function isRig(l) { var n = String(l.name); return n === CTRL || n.indexOf(EFF) === 0; }
@@ -60,9 +70,9 @@ function body(tag, code) { return MARK + " " + tag + "\nvar __r=value;\ntry{\n" 
 var X_WEIGHT = MARK + " weight\nvar __r=0;\ntry{\n" + CORE + "\n__r=W*100;\n}catch(err){ __r=0; }\n__r";
 function useW(code) { return CR + 'var W=effect("SQ Prox Weight")(1).value/100;\n' + code; }
 var X_SCALE = body("scale", useW('__r=mul(value, Math.max(0, 1+cv("Scale")*cv("Scale %")/100*W));'));
-var X_OPAC = body("opacity", useW('__r=clamp(value+W*cv("Opacity")*cv("Opacity %"),0,100);'));
+var X_OPAC = body("opacity", useW('var a=cv("Opacity")*cv("Opacity %")/100; __r=clamp(a>=0 ? value*(1-a*(1-W)) : value*(1+a*W),0,100);'));
 var X_ROT = body("rotation", useW('__r=value+W*cv("Rotation")*cv("Rotation deg");'));
-var X_BLUR = body("blur", useW('__r=Math.max(0,W*cv("Blur")*cv("Blur px"));'));
+var X_BLUR = body("blur", useW('var a=cv("Blur")*cv("Blur px"); __r=Math.max(0, a>=0 ? a*W : -a*(1-W));'));
 var X_TINTA = body("color", useW('__r=clamp(W*cv("Color")*100,0,100);'));
 var X_TINTC = body("color pick", 'var __c=thisComp.layer("' + q(CTRL) + '").effect("Color Pick")(1).value; __r=__c;');
 // push lives on the Anchor Point, so Position (and the distance) is never touched
@@ -75,24 +85,31 @@ var X_PUSH = body("position", CORE +
     '\n__r=value.length>2?[value[0]-lx,value[1]-ly,value[2]]:[value[0]-lx,value[1]-ly];');
 
 // ---------- controller ----------
-function layout(look) {
-    var L = LOOKS[look] || LOOKS["Magnify"], on = L.on;
+function layout(looks) {
+    var on = {}, amt = {};
+    for (var i = 0; i < looks.length; i++) {
+        var L = LOOKS[looks[i]];
+        for (var k in L.on) if (L.on.hasOwnProperty(k)) on[k] = 1;
+        var keys = ["scale", "opacity", "rotation", "position", "blur"];
+        for (var j = 0; j < keys.length; j++) if (L[keys[j]] !== undefined) amt[keys[j]] = L[keys[j]];
+    }
     var hex = "#2FF3FF"; try { if (/^#?[0-9a-f]{6}$/i.test(String(params.color))) hex = String(params.color); } catch (e) {}
-    function a(k, d) { return L[k] !== undefined ? L[k] : d; }
+    function a(k, d) { return amt[k] !== undefined ? amt[k] : d; }
     return [
         ["Radius", "s", num(params.radius, 300)],
         ["Softness", "s", num(params.softness, 70)],
         ["Amount", "s", num(params.amount, 100)],
-        ["Invert", "c", L.invert],
+        ["Invert", "c", params.invert ? 1 : 0],
         ["Scale", "c", on.scale ? 1 : 0], ["Scale %", "s", a("scale", 60)],
-        ["Opacity", "c", on.opacity ? 1 : 0], ["Opacity %", "s", a("opacity", -100)],
+        ["Opacity", "c", on.opacity ? 1 : 0], ["Opacity %", "s", a("opacity", 100)],
         ["Rotation", "c", on.rotation ? 1 : 0], ["Rotation deg", "s", a("rotation", 90)],
         ["Position", "c", on.position ? 1 : 0], ["Position px", "s", a("position", 120)],
-        ["Blur", "c", on.blur ? 1 : 0], ["Blur px", "s", a("blur", 30)],
+        ["Blur", "c", on.blur ? 1 : 0], ["Blur px", "s", a("blur", -30)],
         ["Color", "c", on.color ? 1 : 0], ["Color Pick", "k", sqHex(hex)]
     ];
 }
-function controller(look) {
+function controller(looks) {
+    var look = looks.join(" + ");
     var c = byName(CTRL), fresh = false;
     if (!c) {
         c = comp.layers.addNull(comp.duration);
@@ -107,14 +124,14 @@ function controller(look) {
     }
     // the Look only overwrites the controller when you pick a different one (your tweaks survive re-Apply)
     var same = String(c.comment) === "SQ-PROX look:" + look;
-    var L = layout(look);
+    var L = layout(looks);
     for (var i = 0; i < L.length; i++) {
         var n = L[i][0], kind = L[i][1], v = L[i][2], have = sqFx(c).property(n);
         if (!have) {
             if (kind === "s") sqSlider(c, n, v);
             else if (kind === "c") sqCheckbox(c, n, v);
             else sqCtrl(c, "ADBE Color Control", n, v);
-        } else if (!same || n === "Radius" || n === "Softness" || n === "Amount" || n === "Color Pick") {
+        } else if (!same || n === "Radius" || n === "Softness" || n === "Amount" || n === "Invert" || n === "Color Pick") {
             try { sqFx(c).property(n).property(1).setValue(kind === "c" ? (v ? 1 : 0) : v); } catch (e1) {}
         }
     }
@@ -229,8 +246,8 @@ if (act === "Follow selected layer") {
 // Apply
 var tg = targets(false);
 if (!tg.length) return "Select the layers that should react, then press Apply.";
-var look = String(params.look || "Magnify");
-controller(look);
+var looks = lookList(), look = looks.join(" + ");
+controller(looks);
 var has3 = false;
 for (var h = 0; h < tg.length; h++) if (tg[h].threeDLayer) has3 = true;
 if (!anyEff()) addEffector(has3, null);
