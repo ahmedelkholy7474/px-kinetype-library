@@ -365,34 +365,117 @@ WO.trace = function (piece, em, opt) {
             if (f[2] < kk.length) { var jj = f[2]++; st.push([kk[jj], f[1] && jj === kk.length - 1, -1]); }
             else { st.pop(); if (st.length) { var pf = st[st.length - 1]; if (!(pf[1] && pf[2] === kids[pf[0]].length)) walk.push(pf[0]); } }
         }
-        var pts = [];
-        for (var w = 0; w < walk.length; w++) { var wx = walk[w] % W, wy = (walk[w] - wx) / W; pts.push([R.x0 + (wx + 0.5) / R.k, R.y0 + (wy + 0.5) / R.k]); }
+        var pts = [], nw = [], seenW = {};
+        for (var w = 0; w < walk.length; w++) {
+            var wx = walk[w] % W, wy = (walk[w] - wx) / W;
+            pts.push([R.x0 + (wx + 0.5) / R.k, R.y0 + (wy + 0.5) / R.k]); nw.push(!seenW[walk[w]]); seenW[walk[w]] = 1;
+        }
         for (var r = 0; r < pix.length; r++) radii.push(Math.sqrt(D[pix[r]]) / R.k);
-        if (pts.length === 1) pts.push([pts[0][0] - 0.5 / R.k, pts[0][1]]);
-        var cum = [0]; for (var u = 1; u < pts.length; u++) cum.push(cum[u - 1] + Math.sqrt(Math.pow(pts[u][0] - pts[u - 1][0], 2) + Math.pow(pts[u][1] - pts[u - 1][1], 2)));
-        strokes.push({ pts: pts, cum: cum, len: cum[cum.length - 1] });
+        if (pts.length === 1) { pts.push([pts[0][0] - 0.5 / R.k, pts[0][1]]); nw.push(true); }
+        strokes.push({ raw: pts, nw: nw });
     }
-    strokes.sort(function (a, b) { return b.pts[0][0] - a.pts[0][0]; });   // several lines in one piece: right one first
+    strokes.sort(function (a, b) { return b.raw[0][0] - a.raw[0][0]; });   // several lines in one piece: right one first
     radii.sort(function (a, b) { return a - b; });
-    var r90 = radii.length ? radii[Math.floor(radii.length * 0.9)] : em * 0.05, rMax = radii.length ? radii[radii.length - 1] : r90;
+    var r90 = radii.length ? radii[Math.floor(radii.length * 0.9)] : em * 0.05;
     var brush = 2 * r90 * 1.2 + 1 / R.k;
-    var masks = [], total = 0;
-    for (var s2 = 0; s2 < strokes.length; s2++) { masks.push(bez(rdp(smooth(strokes[s2].pts, 3), 0.9 / R.k))); total += strokes[s2].len; }
-    return { strokes: strokes, masks: masks, brush: brush, len: total, raster: R };
+    // Each stroke becomes: smooth runs (new ink / going back over ink), resampled at an even spacing so the
+    // pen moves at one speed, plus a table that lets the pen skip the going-back parts in no time.
+    var inked = new Uint8Array(W * H);
+    var masks = [], total = 0, ftotal = 0, table = [[0, 0]], step = Math.max(2 / R.k, Math.min(brush * 0.55, em * 0.09));
+    for (var s2 = 0; s2 < strokes.length; s2++) {
+        var S1 = strokes[s2], P0 = S1.raw, runs = [], from = 0;
+        for (var i1 = 2; i1 <= P0.length; i1++) if (i1 === P0.length || S1.nw[i1] !== S1.nw[i1 - 1]) { runs.push({ a: from, b: i1 - 1, fwd: S1.nw[i1 - 1] !== false }); from = i1 - 1; }
+        if (!runs.length) runs.push({ a: 0, b: P0.length - 1, fwd: true });
+        var sm = [], cuts = [];
+        for (var q1 = 0; q1 < runs.length; q1++) {
+            var seg = smooth(P0.slice(runs[q1].a, runs[q1].b + 1), 4);
+            if (sm.length) seg = seg.slice(1);
+            runs[q1].i0 = Math.max(0, sm.length - 1); sm = sm.concat(seg); runs[q1].i1 = sm.length - 1;
+        }
+        var cum = [0]; for (var u = 1; u < sm.length; u++) cum.push(cum[u - 1] + Math.sqrt(Math.pow(sm[u][0] - sm[u - 1][0], 2) + Math.pow(sm[u][1] - sm[u - 1][1], 2)));
+        var L1 = cum[cum.length - 1];
+        // ink along the path: walk the brush over the letter and count only the steps that show new ink
+        // (going back over drawn parts, or brushing where the brush already reached, costs no time)
+        var F = [0], rpx = brush / 2 * R.k, rr2 = rpx * rpx, need = Math.max(1, 0.25 * r90 * R.k), dead = [];
+        for (var u2 = 0; u2 < sm.length; u2++) {
+            var cx0 = (sm[u2][0] - R.x0) * R.k, cy0 = (sm[u2][1] - R.y0) * R.k, nn = 0;
+            for (var yy = Math.max(0, Math.floor(cy0 - rpx)); yy <= Math.min(H - 1, Math.ceil(cy0 + rpx)); yy++)
+                for (var xx = Math.max(0, Math.floor(cx0 - rpx)); xx <= Math.min(W - 1, Math.ceil(cx0 + rpx)); xx++) {
+                    var id = yy * W + xx;
+                    if (R.G[id] && !inked[id] && (xx + 0.5 - cx0) * (xx + 0.5 - cx0) + (yy + 0.5 - cy0) * (yy + 0.5 - cy0) <= rr2) { inked[id] = 1; nn++; }
+                }
+            dead.push(u2 > 0 && nn < need);
+            if (u2 > 0) F.push(F[u2 - 1] + (dead[u2] ? 0 : cum[u2] - cum[u2 - 1]));
+        }
+        // stretches with no new ink longer than a quarter brush become jumps in the table
+        var skips = [];
+        for (var u3 = 1; u3 < sm.length; u3++) {
+            if (!dead[u3]) continue;
+            var e3 = u3; while (e3 + 1 < sm.length && dead[e3 + 1]) e3++;
+            if (cum[e3] - cum[u3 - 1] > brush * 0.25) skips.push([u3 - 1, e3]);
+            else for (var z3 = u3; z3 <= e3; z3++) F[z3] = F[z3 - 1] + cum[z3] - cum[z3 - 1];
+            if (e3 + 1 < sm.length) F[e3 + 1] = F[e3] + cum[e3 + 1] - cum[e3];
+            // keep F running after the stretch
+            for (var z4 = e3 + 1; z4 < sm.length && z4 <= e3 + 1; z4++) {}
+            u3 = e3;
+        }
+        // rebuild F cleanly from the skip list
+        F = [0]; var sk = 0;
+        for (var u4 = 1; u4 < sm.length; u4++) {
+            while (sk < skips.length && u4 > skips[sk][1]) sk++;
+            var inSkip = sk < skips.length && u4 > skips[sk][0] && u4 <= skips[sk][1];
+            F.push(F[u4 - 1] + (inSkip ? 0 : cum[u4] - cum[u4 - 1]));
+        }
+        for (var q2 = 0; q2 < runs.length; q2++) runs[q2].skip = !runs[q2].fwd && cum[runs[q2].i1] - cum[runs[q2].i0] > step * 0.5;
+        // even samples + the turn-back points
+        var want = [];
+        for (var d1 = 0; d1 < L1; d1 += step) want.push(d1);
+        want.push(L1);
+        for (var q3 = 0; q3 < runs.length; q3++) if (runs[q3].skip) { cuts.push(cum[runs[q3].i0]); cuts.push(cum[runs[q3].i1]); }
+        want = want.filter(function (d) { for (var c = 0; c < cuts.length; c++) if (Math.abs(d - cuts[c]) < step * 0.35 && d !== 0 && d !== L1) return false; return true; }).concat(cuts);
+        want.sort(function (x, y) { return x - y; });
+        var smp = [], at = [], k1 = 0, lastD = -1;
+        for (var d2 = 0; d2 < want.length; d2++) {
+            var dd = want[d2]; if (dd - lastD < 1e-6) continue; lastD = dd; at.push(dd);
+            while (k1 < cum.length - 2 && cum[k1 + 1] < dd) k1++;
+            var sl = cum[k1 + 1] - cum[k1], tf = sl > 0 ? (dd - cum[k1]) / sl : 0;
+            smp.push([sm[k1][0] + (sm[k1 + 1 < sm.length ? k1 + 1 : k1][0] - sm[k1][0]) * tf, sm[k1][1] + (sm[k1 + 1 < sm.length ? k1 + 1 : k1][1] - sm[k1][1]) * tf]);
+        }
+        if (smp.length < 2) { smp = [sm[0], sm[sm.length - 1]]; at = [0, L1]; }
+        var mk = bez(smp); masks.push(mk);
+        // the length AE will measure is the mask's, not the pixel trail's: map trail distance -> mask distance
+        var Bc = [0];
+        for (var j5 = 0; j5 < mk.v.length - 1; j5++) {
+            var A5 = mk.v[j5], B5 = mk.v[j5 + 1], C1 = [A5[0] + mk.o[j5][0], A5[1] + mk.o[j5][1]], C2 = [B5[0] + mk.i[j5 + 1][0], B5[1] + mk.i[j5 + 1][1]], pl = A5, ln = 0;
+            for (var t5 = 1; t5 <= 12; t5++) { var tt5 = t5 / 12, uu = 1 - tt5, q5 = [uu * uu * uu * A5[0] + 3 * uu * uu * tt5 * C1[0] + 3 * uu * tt5 * tt5 * C2[0] + tt5 * tt5 * tt5 * B5[0], uu * uu * uu * A5[1] + 3 * uu * uu * tt5 * C1[1] + 3 * uu * tt5 * tt5 * C2[1] + tt5 * tt5 * tt5 * B5[1]]; ln += Math.sqrt((q5[0] - pl[0]) * (q5[0] - pl[0]) + (q5[1] - pl[1]) * (q5[1] - pl[1])); pl = q5; }
+            Bc.push(Bc[j5] + ln);
+        }
+        var toB = function (d) { var j = 0; while (j < at.length - 2 && at[j + 1] < d) j++; var sp = at[j + 1] - at[j]; return Bc[j] + (Bc[j + 1] - Bc[j]) * (sp > 0 ? Math.min(1, Math.max(0, (d - at[j]) / sp)) : 0); };
+        var LB = Bc[Bc.length - 1];
+        // table rows: [ink so far, path so far], in units for now
+        for (var q4 = 0; q4 < skips.length; q4++) {
+            table.push([ftotal + F[skips[q4][0]], total + toB(cum[skips[q4][0]])]);
+            table.push([ftotal + F[skips[q4][1]], total + toB(cum[skips[q4][1]])]);
+        }
+        S1.pts = sm; S1.cum = cum; S1.F = F; S1.len = LB; S1.ink = F[F.length - 1]; S1.base = ftotal;
+        total += LB; ftotal += S1.ink;
+    }
+    table.push([ftotal, total]);
+    for (var t1 = 0; t1 < table.length; t1++) table[t1] = [Math.round(table[t1][0] / Math.max(ftotal, 1e-9) * 1e4) / 1e4, Math.round(table[t1][1] / Math.max(total, 1e-9) * 1e4) / 1e4];
+    return { strokes: strokes, masks: masks, brush: brush, len: total, ink: ftotal, remap: table.length > 2 ? table : null, raster: R };
 };
 
 // where along the piece (0..1) the pen passes closest to a point
 WO.reach = function (tr, x, y) {
-    var best = 1e18, at = 0, acc = 0;
+    var best = 1e18, at = 0;
     for (var s = 0; s < tr.strokes.length; s++) {
         var st = tr.strokes[s];
         for (var i = 0; i < st.pts.length; i++) {
             var dx = st.pts[i][0] - x, dy = st.pts[i][1] - y, d = dx * dx + dy * dy;
-            if (d < best - 1e-9) { best = d; at = acc + st.cum[i]; }
+            if (d < best - 1e-9) { best = d; at = st.base + st.F[i]; }
         }
-        acc += st.len;
     }
-    return { frac: tr.len > 0 ? at / tr.len : 0, dist: Math.sqrt(best) };
+    return { frac: tr.ink > 0 ? at / tr.ink : 0, dist: Math.sqrt(best) };
 };
 
 function r2(m) {
@@ -406,7 +489,7 @@ WO.plan = function (info, opt) {
     for (i = 0; i < info.layers.length; i++) {
         var lay = info.layers[i], em = lay.em > 0 ? lay.em : 100, cl = WO.classify(lay.paths, em), tr = [];
         if (!cl.pieces.length) continue;
-        for (j = 0; j < cl.pieces.length; j++) { tr.push(WO.trace(cl.pieces[j], em, opt)); total += tr[j].len; }
+        for (j = 0; j < cl.pieces.length; j++) { tr.push(WO.trace(cl.pieces[j], em, opt)); total += tr[j].ink; }
         L.push({ lay: lay, cl: cl, tr: tr, em: em });
     }
     if (!L.length) throw new Error("No letters found in the selected text.");
@@ -414,9 +497,9 @@ WO.plan = function (info, opt) {
     for (i = 0; i < L.length; i++) {
         var o = { index: L[i].lay.index, name: L[i].lay.name, pieces: [], marks: [] }, times = [];
         for (j = 0; j < L[i].cl.pieces.length; j++) {
-            var T = L[i].tr[j], d = Math.max(2 * fd, dur * (total > 0 ? T.len / total : 1 / L[i].cl.pieces.length));
+            var T = L[i].tr[j], d = Math.max(2 * fd, dur * (total > 0 ? T.ink / total : 1 / L[i].cl.pieces.length));
             var a = snap(t), b = Math.max(a + fd, snap(t + d)); times.push([a, b]); t += d;
-            o.pieces.push({ refs: L[i].cl.pieces[j].refs, masks: T.masks.map(r2), brush: Math.round(T.brush * pct * 10) / 10, t0: a, t1: b });
+            o.pieces.push({ refs: L[i].cl.pieces[j].refs, masks: T.masks.map(r2), remap: T.remap, brush: Math.round(T.brush * pct * 10) / 10, t0: a, t1: b });
         }
         // each mark pops when the stroke of the closest piece reaches it
         for (j = 0; j < L[i].cl.marks.length; j++) {

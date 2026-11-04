@@ -1,7 +1,7 @@
 {
   "id": "arabic-write-on",
   "name": "Arabic Write-On",
-  "version": 1,
+  "version": 2,
   "order": 1.5,
   "status": "ready",
   "requires": "3.1",

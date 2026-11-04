@@ -177,7 +177,8 @@ for (var li = 0; li < data.layers.length; li++) {
         S("ADBE Stroke-0010", 1);                     // All Masks
         S("ADBE Stroke-0011", 1);                     // Stroke Sequentially
         S("ADBE Stroke-0003", P.brush);               // Brush Size
-        S("ADBE Stroke-0004", 100);                   // Brush Hardness
+        S("ADBE Stroke-0004", 95);                    // Brush Hardness (a hair soft, like a pen)
+        S("ADBE Stroke-0006", 0);                     // Spacing 0: one continuous line, no dabs
         S("ADBE Stroke-0005", 100);                   // Opacity
         S("ADBE Stroke-0008", 0);                     // Start
         S("ADBE Stroke-0007", 3);                     // Paint Style: Reveal Original Image
@@ -186,6 +187,15 @@ for (var li = 0; li < data.layers.length; li++) {
             "var e = effect(\"SQ Write\")(\"ADBE Stroke-0009\");\n(e.value >= 99.9) ? value * 4 : value"; } catch (ex) {}
         var end = dup.property("ADBE Effect Parade").property("SQ Write").property("ADBE Stroke-0009");
         end.setValueAtTime(P.t0, 0); end.setValueAtTime(P.t1, 100);
+        // the pen skips the bits where it goes back over ink it already drew, so it never stalls
+        if (P.remap && P.remap.length > 2) {
+            var rows = []; for (var rr = 0; rr < P.remap.length; rr++) rows.push("[" + P.remap[rr][0] + "," + P.remap[rr][1] + "]");
+            try { end.expression = "// Squeezy Write-On: keyframe End 0 to 100 as usual\nvar T = [" + rows.join(",") + "];\n" +
+                "var p = Math.max(0, Math.min(1, value / 100)), i = 0;\n" +
+                "for (var k = T.length - 2; k >= 0; k--) if (p >= T[k][0]) { i = k; break; }\n" +
+                "var a = T[i], b = T[i + 1], u = b[0] > a[0] ? (p - a[0]) / (b[0] - a[0]) : 1;\n" +
+                "(a[1] + (b[1] - a[1]) * u) * 100"; } catch (ee) {}
+        }
         try { end.setInterpolationTypeAtKey(1, KeyframeInterpolationType.LINEAR, KeyframeInterpolationType.LINEAR); end.setInterpolationTypeAtKey(2, KeyframeInterpolationType.LINEAR, KeyframeInterpolationType.LINEAR); } catch (el) {}
         dup.moveBefore(top); top = dup; made++;
     }
