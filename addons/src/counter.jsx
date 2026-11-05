@@ -357,7 +357,11 @@ function measure(comp, st, arabic) {
     var base = w("HH"), adv = {}, mw = 0, ma = 0, i, c;
     for (i = 0; i < 10; i++) {
         c = String(i); adv[c] = w("H" + c + "H") - base; mw = Math.max(mw, adv[c]);
-        c = String.fromCharCode(1632 + i); adv[c] = w("H" + c + "H") - base; ma = Math.max(ma, adv[c]);
+        // Arabic digits are measured among themselves (c c c c c vs c): mixing them with Latin "H"
+        // switches text direction / fallback font and made the slots far too wide
+        c = String.fromCharCode(1632 + i); adv[c] = (w(c + c + c + c + c) - w(c)) / 4;
+        if (!(adv[c] > 0)) adv[c] = w("H" + c + "H") - base;
+        ma = Math.max(ma, adv[c]);
     }
     adv[","] = w("H,H") - base; adv["."] = w("H.H") - base; adv["-"] = w("H-H") - base;
     tmp.remove();
