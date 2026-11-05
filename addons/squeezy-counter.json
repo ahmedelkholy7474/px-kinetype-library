@@ -1,7 +1,7 @@
 {
   "id": "squeezy-counter",
   "name": "Squeezy Counter",
-  "version": 5,
+  "version": 6,
   "order": 6,
   "status": "ready",
   "requires": "2.0",

@@ -126,19 +126,29 @@ function tabHead(ms, prefix, suffix) {
     ].join("\n");
 }
 
+// Each offset is split over a coarse and a fine animator, and every selector returns a whole percent.
+// (AE keeps selector amounts as whole percents on some setups: one big animator with a huge range then
+//  puts digits a whole letter or more apart. Coarse + fine stays exact to a fraction of a pixel.)
+function lvl(x, R, fine) {
+    // x = wanted value, R = coarse half-range; returns the coarse or the fine percent
+    var a = "Math.round(Math.max(0,Math.min(100,(" + x + "+" + R + ")/(2*" + R + ")*100)))";
+    if (!fine) return a;
+    var F = "(" + R + "/50)";
+    return "Math.round(Math.max(0,Math.min(100,((" + x + ")-(-" + R + "+2*" + R + "*" + a + "/100)+" + F + ")/(2*" + F + ")*100)))";
+}
 // tracking: each digit's advance becomes the slot width (After-tracking, so AE's own alignment stays right)
-function selTrack(head, T) {
+function selTrack(head, T, fine) {
     return head + "\nvar T=" + T + ";\n" +
-        "var t=isN?((isD(ch)?DW-adv(ch):0)+(k<s.length-1?TR:0)):0;\n" +
-        "isN?((t*1000/fs+T)/(2*T)*100):0;";
+        "var x=isN?((isD(ch)?DW-adv(ch):0)+(k<s.length-1?TR:0))*1000/fs:0;\n" +
+        "isN?" + lvl("x", "T", fine) + ":0;";
 }
 // shift: centre each digit in its slot + glide when the digit count changes
-function selShift(head, P) {
+function selShift(head, P, fine) {
     return head + "\nvar PP=" + P + ";\n" +
         "var al=Math.round(E('Align',time)), sm=Math.max(0,E('Smooth Glide',time)), G=0;\n" +
         "if(sm>0&&al<3){var N=10,acc=0;for(var q2=0;q2<N;q2++)acc+=tabW(S(time-sm*q2/(N-1)));var W=tabW(s);G=(al==2?-(W-acc/N)/2:-(W-acc/N));}\n" +
         "var off=G+((isN&&isD(ch))?(DW-adv(ch))/2:0);\n" +
-        "(off+PP)/(2*PP)*100;";
+        lvl("off", "PP", fine) + ";";
 }
 
 function addSymbolControls(layer, o) {
@@ -403,12 +413,15 @@ function ensureSliderFx(L, name, v) { if (!getFx(L, name)) addSlider(L, name, v)
 function buildTabular(L, ms, prefix, suffix) {
     var A = textAnims(L);
     for (var i = A.numProperties; i >= 1; i--) if (String(A.property(i).name).indexOf("SQ ") === 0) A.property(i).remove();
-    var T = 50000, P = Math.max(5000, Math.round(ms.fs0 * 50));
+    // ranges sized to what a counter needs (a few letters), not huge: T in 1/1000 em, P in px
+    var T = 3000, P = Math.max(200, Math.round(ms.fs0 * 6)), Tf = T / 50, Pf = P / 50;
     var head = tabHead(ms, prefix, suffix);
-    addAnim(L, "SQ Track Base", "ADBE Text Tracking Amount", -T, head + "\nisN?100:0;");
-    addAnim(L, "SQ Track", "ADBE Text Tracking Amount", 2 * T, selTrack(head, T));
-    addAnim(L, "SQ Shift Base", "ADBE Text Position 3D", [-P, 0, 0], "100;");
-    addAnim(L, "SQ Shift", "ADBE Text Position 3D", [2 * P, 0, 0], selShift(head, P));
+    addAnim(L, "SQ Track Base", "ADBE Text Tracking Amount", -(T + Tf), head + "\nisN?100:0;");
+    addAnim(L, "SQ Track", "ADBE Text Tracking Amount", 2 * T, selTrack(head, T, false));
+    addAnim(L, "SQ Track Fine", "ADBE Text Tracking Amount", 2 * Tf, selTrack(head, T, true));
+    addAnim(L, "SQ Shift Base", "ADBE Text Position 3D", [-(P + Pf), 0, 0], "100;");
+    addAnim(L, "SQ Shift", "ADBE Text Position 3D", [2 * P, 0, 0], selShift(head, P, false));
+    addAnim(L, "SQ Shift Fine", "ADBE Text Position 3D", [2 * Pf, 0, 0], selShift(head, P, true));
     L.property("Source Text").expression = singleTextExpr(prefix, suffix);
     var m = getMeta(L) || {};
     m.pre = prefix; m.suf = suffix;
