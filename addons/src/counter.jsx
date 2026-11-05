@@ -116,8 +116,12 @@ function tabHead(ms, prefix, suffix) {
     var adv = [];
     for (var key in ms.adv) if (ms.adv.hasOwnProperty(key)) adv.push(q(key) + ":" + ms.adv[key]);
     return coreExpr("thisLayer") + "\n" + partsExpr(prefix, suffix) + "\n" + [
-        "var ADV={" + adv.join(",") + "}, FS0=" + ms.fs0 + ", MW=" + ms.mw + ", MA=" + ms.ma + ";",
+        "var ADV={" + adv.join(",") + "}, FS0=" + ms.fs0 + ", MW=" + ms.mw + ", MA=" + ms.ma + ", KT=" + (ms.kt || ms.fs0 / 1000) + ", KR=" + (ms.kr === undefined ? 1 : ms.kr) + ";",
         "var fs=FS0; try{var z=text.sourceText.style.fontSize; if(z>0) fs=z;}catch(e){}",
+        "function TU(px){var kk=KT*(1+KR*(fs/FS0-1));return kk>0?px/kk:0;}",
+        // last few % of Progress: digits ease back to the text's own spacing, so the final number sits
+        // exactly where (and how) your text was before the count
+        "var PRG=E('Progress',time), SW=Math.max(0,Math.min(1,(PRG-95)/5)), SET=1-SW*SW*(3-2*SW);",
         "function adv(c){var v=ADV[c];return (v===undefined?ADV['0']:v)*fs/100;}",
         "function isD(c){var x=c.charCodeAt(0);return (x>=48&&x<=57)||(x>=1632&&x<=1641);}",
         "var DW=(E('Arabic Digits',time)>0.5?MA:MW)*fs/100*Math.max(1,E('Digit Width %',time))/100, TR=E('Tracking',time);",
@@ -139,7 +143,7 @@ function lvl(x, R, fine) {
 // tracking: each digit's advance becomes the slot width (After-tracking, so AE's own alignment stays right)
 function selTrack(head, T, fine) {
     return head + "\nvar T=" + T + ";\n" +
-        "var x=isN?((isD(ch)?DW-adv(ch):0)+(k<s.length-1?TR:0))*1000/fs:0;\n" +
+        "var x=isN?TU(((isD(ch)?DW-adv(ch):0)*SET+(k<s.length-1?TR:0))):0;\n" +
         "isN?" + lvl("x", "T", fine) + ":0;";
 }
 // shift: centre each digit in its slot + glide when the digit count changes
@@ -147,7 +151,7 @@ function selShift(head, P, fine) {
     return head + "\nvar PP=" + P + ";\n" +
         "var al=Math.round(E('Align',time)), sm=Math.max(0,E('Smooth Glide',time)), G=0;\n" +
         "if(sm>0&&al<3){var N=10,acc=0;for(var q2=0;q2<N;q2++)acc+=tabW(S(time-sm*q2/(N-1)));var W=tabW(s);G=(al==2?-(W-acc/N)/2:-(W-acc/N));}\n" +
-        "var off=G+((isN&&isD(ch))?(DW-adv(ch))/2:0);\n" +
+        "var off=(G+((isN&&isD(ch))?(DW-adv(ch))/2:0))*SET;\n" +
         lvl("off", "PP", fine) + ";";
 }
 
@@ -355,27 +359,44 @@ function applyStyle(layer, st, just, text) {
     p.setValue(td);
 }
 
-// advance width of each glyph, measured as  w("H?H") - w("HH")
+// advance width of each glyph, measured as  w("H?H") - w("HH"), each string on its own fresh layer
+// (re-using one layer can hand back a stale sourceRect, which made every slot far too wide).
+// Also measures what one unit of animator Tracking is in pixels, at two sizes, so the rig never
+// has to guess the unit.
 function measure(comp, st, arabic) {
-    var tmp = comp.layers.addText("HH");
-    applyStyle(tmp, st, ParagraphJustification.LEFT_JUSTIFY);
-    function w(str) {
-        var p = tmp.property("Source Text"), td = p.value;
-        td.text = str; p.setValue(td);
-        return tmp.sourceRectAtTime(tmp.inPoint, false).width;
+    var t = comp.time;
+    function lay(str, size) {
+        var L = comp.layers.addText(str);
+        var s2 = {}; for (var k in st) if (st.hasOwnProperty(k)) s2[k] = st[k];
+        if (size) s2.size = size;
+        applyStyle(L, s2, ParagraphJustification.LEFT_JUSTIFY);
+        return L;
+    }
+    function w(str, size) { var L = lay(str, size), r = L.sourceRectAtTime(t, false).width; L.remove(); return r; }
+    function trackPx(size) {
+        var L = lay("HHHHH", size), w0 = L.sourceRectAtTime(t, false).width;
+        var an = textAnims(L).addProperty("ADBE Text Animator"), ix = an.propertyIndex;
+        function pr() { return textAnims(L).property(ix).property("ADBE Text Animator Properties"); }
+        pr().addProperty("ADBE Text Tracking Amount");
+        try { pr().addProperty("ADBE Text Track Type"); } catch (e0) {}
+        try { pr().property("ADBE Text Track Type").setValue(3); } catch (e1) {}
+        pr().property("ADBE Text Tracking Amount").setValue(1000);
+        var w1 = L.sourceRectAtTime(t, false).width;
+        L.remove();
+        return (w1 - w0) / 4 / 1000;                    // px per unit
     }
     var base = w("HH"), adv = {}, mw = 0, ma = 0, i, c;
     for (i = 0; i < 10; i++) {
         c = String(i); adv[c] = w("H" + c + "H") - base; mw = Math.max(mw, adv[c]);
-        // Arabic digits are measured among themselves (c c c c c vs c): mixing them with Latin "H"
-        // switches text direction / fallback font and made the slots far too wide
+        // Arabic digits are measured among themselves: mixing them with Latin "H" changes direction / font
         c = String.fromCharCode(1632 + i); adv[c] = (w(c + c + c + c + c) - w(c)) / 4;
         if (!(adv[c] > 0)) adv[c] = w("H" + c + "H") - base;
         ma = Math.max(ma, adv[c]);
     }
     adv[","] = w("H,H") - base; adv["."] = w("H.H") - base; adv["-"] = w("H-H") - base;
-    tmp.remove();
     var fs0 = st.size > 0 ? st.size : 100;
+    var k1 = trackPx(fs0), k2 = trackPx(fs0 * 2), kr = k1 > 0 ? Math.max(0, Math.min(1, k2 / k1 - 1)) : 1;
+    if (!(k1 > 0)) { k1 = fs0 / 1000; kr = 1; }          // fall back to 1/1000 em
     if (!(mw > 0)) mw = fs0 * 0.6;
     if (!(ma > 0)) ma = mw;
     var dw = Math.max(arabic ? ma : mw, adv["-"] || 0);
@@ -384,7 +405,8 @@ function measure(comp, st, arabic) {
     function nz(x) { return Math.round((x > 0 ? x : 0) * 100 / fs0 * 1000) / 1000; }
     var nadv = {};
     for (c in adv) if (adv.hasOwnProperty(c)) nadv[c] = nz(adv[c]);
-    return { dw: Math.round(dw * 10) / 10, sw: Math.round(sw * 10) / 10, fs0: fs0, adv: nadv, mw: nz(mw), ma: nz(ma) };
+    return { dw: Math.round(dw * 10) / 10, sw: Math.round(sw * 10) / 10, fs0: fs0, adv: nadv, mw: nz(mw), ma: nz(ma),
+             kt: Math.round(k1 * 1e6) / 1e6, kr: Math.round(kr * 100) / 100 };
 }
 
 // ---------------- one-layer rig ----------------
