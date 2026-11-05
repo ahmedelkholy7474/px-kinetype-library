@@ -27,6 +27,7 @@ var presets = fs.readdirSync(presetDir)
   });
 
 var enginePath = path.join(dir, "engine.json");
+var brandPath = path.join(dir, "brand.json");
 var addonDir = path.join(dir, "addons");
 var addons = fs.existsSync(addonDir) ? fs.readdirSync(addonDir).filter(function (f) { return /\.json$/.test(f); })
   .map(function (f) {
@@ -56,6 +57,7 @@ var lib = {
   name: "Squeezy Text Library",
   schema: 1,
   engine: fs.existsSync(enginePath) ? JSON.parse(fs.readFileSync(enginePath, "utf8")) : undefined,
+  brand: fs.existsSync(brandPath) ? JSON.parse(fs.readFileSync(brandPath, "utf8")) : undefined,
   updated: new Date().toISOString(),
   categories: categories,
   presets: presets,
