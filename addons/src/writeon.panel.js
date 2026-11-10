@@ -66,7 +66,7 @@ function touch(A, B, eps) {
 }
 
 // contours -> components (outer + its holes) -> bodies / marks -> pieces (bodies that touch)
-WO.classify = function (paths, em) {
+WO.classify = function (paths, em, shape) {
     var tol = em / 60, C = [], i, j;
     for (i = 0; i < paths.length; i++) {
         var poly = flatten(paths[i], tol);
@@ -89,7 +89,8 @@ WO.classify = function (paths, em) {
         c.cx = (c.bb[0] + c.bb[2]) / 2; c.cy = (c.bb[1] + c.bb[3]) / 2;
         c.small = Math.max(c.w, c.h) < 0.45 * em && c.area < 0.05 * em * em;
         c.tiny = Math.max(c.w, c.h) < 0.32 * em && c.area < 0.045 * em * em;   // dot / hamza / shadda / haraka size
-        c.group = c.outer.ref.slice(0, -1).join(".");
+        // text: one group per character. a shape layer has no characters, so every contour is its own
+        c.group = shape ? c.outer.ref.join(".") : c.outer.ref.slice(0, -1).join(".");
     }
     // the biggest shape of every character is its letter (or a lone mark), the rest are dots / hamza
     var big = {};
@@ -166,6 +167,24 @@ WO.classify = function (paths, em) {
         }
         if (hit) { hit.items.push(pc); hit.y0 = Math.min(hit.y0, pc.bb[1]); hit.y1 = Math.max(hit.y1, pc.bb[3]); }
         else lines.push({ y0: pc.bb[1], y1: pc.bb[3], core: pc.bb[3] - pc.bb[1], items: [pc] });
+    }
+    // shape layers: a short "line" made of small bits floating just over / under a real line belongs to it
+    // (a dagger alef or a long haraka drawn as a shape), so it is written with that line, not before it
+    if (shape && lines.length > 1) {
+        var maxCore = 0;
+        for (i = 0; i < lines.length; i++) maxCore = Math.max(maxCore, lines[i].y1 - lines[i].y0);
+        var span = function (ln) { var x0 = 1e9, x1 = -1e9; for (var q = 0; q < ln.items.length; q++) { x0 = Math.min(x0, ln.items[q].bb[0]); x1 = Math.max(x1, ln.items[q].bb[2]); } return [x0, x1]; };
+        for (i = lines.length - 1; i >= 0; i--) {
+            var sl = lines[i]; if (sl.y1 - sl.y0 >= 0.45 * maxCore) continue;
+            var sx = span(sl), host = null, hd = 1e18;
+            for (j = 0; j < lines.length; j++) {
+                var hl = lines[j]; if (j === i || hl.y1 - hl.y0 < 0.45 * maxCore) continue;
+                var hx = span(hl); if (sx[1] < hx[0] || sx[0] > hx[1]) continue;
+                var gap = Math.max(0, Math.max(hl.y0 - sl.y1, sl.y0 - hl.y1));
+                if (gap < 0.5 * maxCore && gap < hd) { hd = gap; host = hl; }
+            }
+            if (host) { host.items = host.items.concat(sl.items); host.y0 = Math.min(host.y0, sl.y0); host.y1 = Math.max(host.y1, sl.y1); lines.splice(i, 1); }
+        }
     }
     lines.sort(function (a, b) { return (a.y0 + a.y1) - (b.y0 + b.y1); });
     var ordered = [];
@@ -327,6 +346,9 @@ WO.trace = function (piece, em, opt) {
     opt = opt || {};
     var R = raster(piece, em, opt.quality), W = R.W, H = R.H, D = edt(R), S = thin(R);
     prune(S, W, H, D, R.k);
+    // a round blob (a dot, a circle shape) can thin away to nothing: keep its centre so the brush stamps it
+    var anyS = false; for (var q0 = 0; q0 < S.length && !anyS; q0++) if (S[q0]) anyS = true;
+    if (!anyS) { var bi0 = -1, bd0 = -1; for (var q1 = 0; q1 < D.length; q1++) if (R.G[q1] && D[q1] > bd0) { bd0 = D[q1]; bi0 = q1; } if (bi0 >= 0) S[bi0] = 1; }
     var seenC = new Uint8Array(W * H), comps = [];
     for (var idx = 0; idx < S.length; idx++) {
         if (!S[idx] || seenC[idx]) continue;
@@ -482,35 +504,75 @@ function r2(m) {
     function f(a) { return a.map(function (p) { return [Math.round(p[0] * 100) / 100, Math.round(p[1] * 100) / 100]; }); }
     return { v: f(m.v), i: f(m.i), o: f(m.o), c: false };
 }
-WO.plan = function (info, opt) {
-    var dur = Math.max(0.1, opt.duration || 2), t0 = info.t0 || 0, fd = info.fd || 1 / 30, pct = (opt.brush || 100) / 100;
-    function snap(t) { return Math.round(t / fd) * fd; }
-    var L = [], total = 0, i, j;
-    for (i = 0; i < info.layers.length; i++) {
-        var lay = info.layers[i], em = lay.em > 0 ? lay.em : 100, cl = WO.classify(lay.paths, em), tr = [];
-        if (!cl.pieces.length) continue;
-        for (j = 0; j < cl.pieces.length; j++) { tr.push(WO.trace(cl.pieces[j], em, opt)); total += tr[j].ink; }
-        L.push({ lay: lay, cl: cl, tr: tr, em: em });
+// a shape layer has no font size: take it from its main shapes (the ones that make most of the ink)
+WO.em = function (paths) {
+    var bb = [1e9, 1e9, -1e9, -1e9], i;
+    for (i = 0; i < paths.length; i++) for (var k = 0; k < paths[i].v.length; k++) {
+        var q = paths[i].v[k]; bb = [Math.min(bb[0], q[0]), Math.min(bb[1], q[1]), Math.max(bb[2], q[0]), Math.max(bb[3], q[1])];
     }
-    if (!L.length) throw new Error("No letters found in the selected text.");
+    var Hh = Math.max(1, bb[3] - bb[1]), tol = Math.max(0.01, Math.sqrt(Math.pow(bb[2] - bb[0], 2) + Hh * Hh) / 400), C = [], tot = 0;
+    for (i = 0; i < paths.length; i++) { var P = flatten(paths[i], tol); if (P.length < 3) continue; var a = Math.abs(area(P)), b = bbox(P); C.push({ a: a, h: b[3] - b[1] }); tot += a; }
+    if (!C.length) return Hh;
+    C.sort(function (x, y) { return y.a - x.a; });
+    var hs = [], acc = 0;
+    for (i = 0; i < C.length; i++) { hs.push(C[i].h); acc += C[i].a; if (acc >= 0.8 * tot) break; }
+    hs.sort(function (x, y) { return x - y; });
+    return Math.min(Hh, Math.max(Hh / 8, hs[Math.floor(hs.length / 2)] * 1.7));   // main shapes run ~0.5-0.8 em tall
+};
+function mirror(p) {
+    function f(a) { return a.map(function (q) { return [-q[0], q[1]]; }); }
+    var o = {}; for (var k in p) o[k] = p[k];
+    o.v = f(p.v); o.i = f(p.i); o.o = f(p.o); return o;
+}
+function pathLen(p) {
+    var P = flatten(p, 1), L = 0;
+    for (var i = 1; i < P.length; i++) L += Math.sqrt(Math.pow(P[i][0] - P[i - 1][0], 2) + Math.pow(P[i][1] - P[i - 1][1], 2));
+    if (p.c !== false && P.length > 1) L += Math.sqrt(Math.pow(P[0][0] - P[P.length - 1][0], 2) + Math.pow(P[0][1] - P[P.length - 1][1], 2));
+    return L;
+}
+WO.plan = function (info, opt) {
+    var dur = Math.max(0.1, opt.duration || 2), t0 = info.t0 || 0, fd = info.fd || 1 / 30, pct = (opt.brush || 100) / 100, ltr = opt.dir === "ltr";
+    function snap(t) { return Math.round(t / fd) * fd; }
+    var L = [], total = 0, i, j, warn = [];
+    for (i = 0; i < info.layers.length; i++) {
+        var lay = info.layers[i], shape = lay.kind === "shape", paths = lay.paths || [];
+        if (ltr) paths = paths.map(mirror);                 // left to right = the same pen on a mirrored drawing
+        var em = shape ? WO.em(paths) : (lay.em > 0 ? lay.em : 100);
+        var cl = paths.length ? WO.classify(paths, em, shape) : { pieces: [], marks: [] }, tr = [];
+        var lineLen = 0, lines = lay.lines || [];
+        for (j = 0; j < lines.length; j++) lineLen += pathLen(lines[j]);
+        if (!cl.pieces.length && !lineLen) { if (shape) warn.push(lay.name); continue; }
+        for (j = 0; j < cl.pieces.length; j++) { tr.push(WO.trace(cl.pieces[j], em, opt)); total += tr[j].ink; }
+        total += lineLen;
+        if (lay.repeater) warn.push(lay.name + " (Repeater copies are not drawn)");
+        L.push({ lay: lay, cl: cl, tr: tr, em: em, lineLen: lineLen });
+    }
+    if (!L.length) throw new Error(warn.length ? "Nothing to draw in " + warn.join(", ") + ": it has no visible Fill or Stroke." : "No letters found in the selected text.");
     var out = { layers: [] }, t = t0;
+    function unmirror(m) { return ltr ? mirror(m) : m; }
     for (i = 0; i < L.length; i++) {
-        var o = { index: L[i].lay.index, name: L[i].lay.name, pieces: [], marks: [] }, times = [];
+        var o = { index: L[i].lay.index, name: L[i].lay.name, pieces: [], marks: [], lines: null }, times = [];
         for (j = 0; j < L[i].cl.pieces.length; j++) {
             var T = L[i].tr[j], d = Math.max(2 * fd, dur * (total > 0 ? T.ink / total : 1 / L[i].cl.pieces.length));
             var a = snap(t), b = Math.max(a + fd, snap(t + d)); times.push([a, b]); t += d;
-            o.pieces.push({ refs: L[i].cl.pieces[j].refs, masks: T.masks.map(r2), remap: T.remap, brush: Math.round(T.brush * pct * 10) / 10, t0: a, t1: b });
+            o.pieces.push({ refs: L[i].cl.pieces[j].refs, masks: T.masks.map(unmirror).map(r2), remap: T.remap, brush: Math.round(T.brush * pct * 10) / 10, t0: a, t1: b });
         }
         // each mark pops when the stroke of the closest piece reaches it
         for (j = 0; j < L[i].cl.marks.length; j++) {
             var M = L[i].cl.marks[j], bi = 0, bd = 1e18, bf = 0;
             for (var p = 0; p < L[i].tr.length; p++) { var rc = WO.reach(L[i].tr[p], M.cx, M.cy); if (rc.dist < bd) { bd = rc.dist; bi = p; bf = rc.frac; } }
             var tm = snap(times[bi][0] + bf * (times[bi][1] - times[bi][0]));
-            o.marks.push({ refs: M.refs, cx: M.cx, cy: M.cy, t: tm });
+            o.marks.push({ refs: M.refs, cx: ltr ? -M.cx : M.cx, cy: M.cy, t: tm });
         }
         o.marks.sort(function (a, b) { return a.t - b.t; });
+        // stroke-only paths draw after the filled shapes, one after another in stacking order
+        if (L[i].lineLen > 0) {
+            var dl = Math.max(2 * fd, dur * L[i].lineLen / total), la = snap(t), lb = Math.max(la + fd, snap(t + dl)); t += dl;
+            o.lines = { refs: L[i].lay.lines.map(function (q) { return q.ref; }), t0: la, t1: lb };
+        }
         out.layers.push(o);
     }
+    if (warn.length) out.warn = warn;
     return out;
 };
 
@@ -519,7 +581,7 @@ if (!api || !api.run) return WO;   // tests load the geometry only
 
 var v = api.values || {};
 if (v.action === "Remove") return api.run({ phase: "remove" });
-var opt = { duration: parseFloat(String(v.duration).replace(",", ".")) || 2, brush: Number(v.brush) || 100, quality: 120 };
+var opt = { duration: parseFloat(String(v.duration).replace(",", ".")) || 2, brush: Number(v.brush) || 100, quality: 120, dir: v.dir === "Left \u2192 Right" ? "ltr" : "rtl" };
 return api.run({ phase: "read" }).then(function (r) {
     if (!r.ok) return r;
     var data;
