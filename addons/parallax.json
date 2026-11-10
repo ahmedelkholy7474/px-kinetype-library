@@ -1,0 +1,144 @@
+{
+  "id": "parallax",
+  "name": "Squeezy Parallax",
+  "version": 1,
+  "order": 7,
+  "status": "ready",
+  "requires": "3.0",
+  "description": "Select the layers of a scene (background, middle, foreground) and pick a move: every layer shifts and scales by its depth like a real camera. 2D needs no camera; 3D builds one.",
+  "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M2 17l5-6 4 4 3-3 8 8H2z\" fill=\"currentColor\" fill-opacity=\".25\"/><path d=\"M2 13l4-4 3 3\" opacity=\".55\"/><circle cx=\"17\" cy=\"6\" r=\"2.2\" opacity=\".55\"/></svg>",
+  "colors": [
+    "#8B6CFF",
+    "#FF5FA8"
+  ],
+  "include": [
+    "_common.jsx"
+  ],
+  "scriptFile": "parallax.jsx",
+  "runLabel": "Go",
+  "params": [
+    {
+      "id": "action",
+      "label": "Do",
+      "type": "select",
+      "options": [
+        "Apply",
+        "Change motion",
+        "Remove"
+      ],
+      "value": "Apply"
+    },
+    {
+      "id": "motion",
+      "label": "Move",
+      "type": "select",
+      "options": [
+        "Push In",
+        "Pull Out",
+        "Pan Left",
+        "Pan Right",
+        "Rise",
+        "Descend",
+        "Orbit Left",
+        "Orbit Right",
+        "Drift In",
+        "Float (loop)",
+        "Manual (no keys)"
+      ],
+      "value": "Push In"
+    },
+    {
+      "id": "mode",
+      "label": "Mode",
+      "type": "select",
+      "options": [
+        "2D (light)",
+        "3D Camera"
+      ],
+      "value": "2D (light)"
+    },
+    {
+      "id": "duration",
+      "label": "Duration",
+      "type": "slider",
+      "min": 0.5,
+      "max": 20,
+      "step": 0.1,
+      "value": 5,
+      "unit": "s"
+    },
+    {
+      "id": "travel",
+      "label": "Travel (pan / orbit / float)",
+      "type": "slider",
+      "min": 0,
+      "max": 1000,
+      "value": 200,
+      "unit": "px"
+    },
+    {
+      "id": "push",
+      "label": "Push (push / pull / drift)",
+      "type": "slider",
+      "min": 0,
+      "max": 80,
+      "value": 25,
+      "unit": "%"
+    },
+    {
+      "id": "depth",
+      "label": "Depth spread",
+      "type": "slider",
+      "min": 0,
+      "max": 300,
+      "value": 100,
+      "unit": "%"
+    },
+    {
+      "id": "smooth",
+      "label": "Smooth ease",
+      "type": "checkbox",
+      "value": true
+    },
+    {
+      "id": "order",
+      "label": "Depth order",
+      "type": "select",
+      "options": [
+        "Top layer = closest",
+        "Bottom layer = closest",
+        "Keep current"
+      ],
+      "value": "Top layer = closest",
+      "advanced": true
+    },
+    {
+      "id": "focus",
+      "label": "Focus depth (sharp + orbit lock)",
+      "type": "slider",
+      "min": 0,
+      "max": 100,
+      "value": 50,
+      "unit": "%",
+      "advanced": true
+    },
+    {
+      "id": "blur",
+      "label": "Depth blur",
+      "type": "slider",
+      "min": 0,
+      "max": 60,
+      "value": 0,
+      "unit": "px",
+      "advanced": true
+    },
+    {
+      "id": "fill",
+      "label": "Fill edges (auto overscan)",
+      "type": "checkbox",
+      "value": true,
+      "advanced": true
+    }
+  ],
+  "previewFile": "parallax.preview.js"
+}
