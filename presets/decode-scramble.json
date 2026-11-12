@@ -2,7 +2,7 @@
   "id": "decode-scramble",
   "name": "Decode Scramble",
   "category": "pixel",
-  "version": 1,
+  "version": 2,
   "added": "2026-10-29",
   "source": "text_animation_2.mp4",
   "seed": 67,
@@ -181,5 +181,8 @@
       "color": "#FFFFFF"
     }
   ],
-  "order": 6
+  "order": 6,
+  "arabic": {
+    "keepGlyph": true
+  }
 }
