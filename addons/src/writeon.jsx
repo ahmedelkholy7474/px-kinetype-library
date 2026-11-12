@@ -1,5 +1,6 @@
 // Squeezy add-on: Arabic Write-On (host side). Runs as function(params, comp, layers).
 // The panel drives it in phases:
+//   (a shape layer is read as it is: filled paths are traced like letters, stroke-only paths draw with Trim Paths)
 //   phase "read"   selected Arabic text layer(s) -> AE outlines (Create Shapes from Text): returns every
 //                  path in layer space + where it lives in the outlines layer (JSON string), then
 //                  deletes the outlines again so nothing is left if the panel stops
@@ -32,16 +33,74 @@ function pt(M, p) { return [M[0] * p[0] + M[2] * p[1] + M[4], M[1] * p[0] + M[3]
 function vec(M, p) { return [M[0] * p[0] + M[2] * p[1], M[1] * p[0] + M[3] * p[1]]; }
 
 // every path of a shape layer, with its index chain from the root (to find it again in a duplicate)
-function walk(group, chain, M, out) {
+// f / s: a visible Fill / Stroke paints it (an operator paints the paths above it in its group and in the groups above it)
+var PATHS = { "ADBE Vector Shape - Group": 1, "ADBE Vector Shape - Rect": 1, "ADBE Vector Shape - Ellipse": 1, "ADBE Vector Shape - Star": 1 };
+var FILLS = { "ADBE Vector Graphic - Fill": 1, "ADBE Vector Graphic - G-Fill": 1 };
+var STROKES = { "ADBE Vector Graphic - Stroke": 1, "ADBE Vector Graphic - G-Stroke": 1 };
+function isOn(it) { try { return it.enabled !== false; } catch (e) { return true; } }
+function paintsAfter(group, i, inh) {
+    var f = inh.f, st = inh.s;
+    for (var j = i + 1; j <= group.numProperties; j++) { var it = group.property(j); if (!isOn(it)) continue; if (FILLS[it.matchName]) f = true; if (STROKES[it.matchName]) st = true; }
+    return { f: f, s: st };
+}
+// rectangles, ellipses and stars as bezier paths (shape space)
+function shapeData(it) {
+    var mn = it.matchName, K = 0.5523;
+    if (mn === "ADBE Vector Shape - Group") return it.property("ADBE Vector Shape").value;
+    function mk(v, ii, oo) { return { vertices: v, inTangents: ii, outTangents: oo, closed: true }; }
+    if (mn === "ADBE Vector Shape - Rect") {
+        var sz = it.property("ADBE Vector Rect Size").value, p = it.property("ADBE Vector Rect Position").value, r = 0;
+        try { r = Math.max(0, Math.min(it.property("ADBE Vector Rect Roundness").value, sz[0] / 2, sz[1] / 2)); } catch (e) {}
+        var x0 = p[0] - sz[0] / 2, x1 = p[0] + sz[0] / 2, y0 = p[1] - sz[1] / 2, y1 = p[1] + sz[1] / 2, k = K * r, z = [0, 0];
+        if (r <= 0) return mk([[x1, y0], [x1, y1], [x0, y1], [x0, y0]], [z, z, z, z], [z, z, z, z]);
+        return mk([[x1, y0 + r], [x1, y1 - r], [x1 - r, y1], [x0 + r, y1], [x0, y1 - r], [x0, y0 + r], [x0 + r, y0], [x1 - r, y0]],
+            [[0, -k], z, [k, 0], z, [0, k], z, [-k, 0], z], [z, [0, k], z, [-k, 0], z, [0, -k], z, [k, 0]]);
+    }
+    if (mn === "ADBE Vector Shape - Ellipse") {
+        var es = it.property("ADBE Vector Ellipse Size").value, ep = it.property("ADBE Vector Ellipse Position").value, rx = es[0] / 2, ry = es[1] / 2;
+        return mk([[ep[0], ep[1] - ry], [ep[0] + rx, ep[1]], [ep[0], ep[1] + ry], [ep[0] - rx, ep[1]]],
+            [[-K * rx, 0], [0, -K * ry], [K * rx, 0], [0, K * ry]], [[K * rx, 0], [0, K * ry], [-K * rx, 0], [0, -K * ry]]);
+    }
+    if (mn === "ADBE Vector Shape - Star") {
+        var ty = 1, n = 5, sp = [0, 0], rot = 0, ir = 50, orr = 100;
+        try { ty = it.property("ADBE Vector Star Type").value; } catch (e1) {}
+        try { n = Math.max(3, Math.round(it.property("ADBE Vector Star Points").value)); } catch (e2) {}
+        try { sp = it.property("ADBE Vector Star Position").value; } catch (e3) {}
+        try { rot = it.property("ADBE Vector Star Rotation").value; } catch (e4) {}
+        try { orr = it.property("ADBE Vector Star Outer Radius").value; } catch (e5) {}
+        try { ir = it.property("ADBE Vector Star Inner Radius").value; } catch (e6) {}
+        var cnt = ty === 2 ? n : n * 2, v = [], zz = [];
+        for (var q = 0; q < cnt; q++) {
+            var a = (rot + q * 360 / cnt - 90) * Math.PI / 180, rr = ty === 2 || q % 2 === 0 ? orr : ir;
+            v.push([sp[0] + rr * Math.cos(a), sp[1] + rr * Math.sin(a)]); zz.push([0, 0]);
+        }
+        return mk(v, zz, zz.slice(0));
+    }
+    return null;
+}
+function walk(group, chain, M, out, inh) {
+    inh = inh || { f: false, s: false };
     for (var i = 1; i <= group.numProperties; i++) {
         var it = group.property(i), mn = it.matchName, ch = chain.concat([i]);
-        if (mn === "ADBE Vector Group") walk(it.property("ADBE Vectors Group"), ch.concat([2]), mMul(M, gMatrix(it)), out);
-        else if (mn === "ADBE Vector Shape - Group") {
-            var sh = it.property("ADBE Vector Shape").value, p = { ref: ch, v: [], i: [], o: [], c: sh.closed };
+        if (!isOn(it)) continue;                                  // hidden group / path: not drawn
+        if (mn === "ADBE Vector Group") walk(it.property("ADBE Vectors Group"), ch.concat([2]), mMul(M, gMatrix(it)), out, paintsAfter(group, i, inh));
+        else if (PATHS[mn]) {
+            var sh = null; try { sh = shapeData(it); } catch (es) {}
+            if (!sh) continue;
+            var pa = paintsAfter(group, i, inh);
+            var p = { ref: ch, v: [], i: [], o: [], c: sh.closed, f: pa.f, s: pa.s };
             for (var k = 0; k < sh.vertices.length; k++) { p.v.push(pt(M, sh.vertices[k])); p.i.push(vec(M, sh.inTangents[k])); p.o.push(vec(M, sh.outTangents[k])); }
             out.push(p);
         }
     }
+}
+function hasRepeater(g) {
+    for (var i = 1; i <= g.numProperties; i++) {
+        var it = g.property(i);
+        if (it.matchName === "ADBE Vector Filter - Repeater" && isOn(it)) return true;
+        if (it.matchName === "ADBE Vector Group" && hasRepeater(it.property("ADBE Vectors Group"))) return true;
+    }
+    return false;
 }
 function propAt(layer, chain) {
     var p = layer.property("ADBE Root Vectors Group");
@@ -63,7 +122,7 @@ function keepOnly(layer, keep) {
 function hasPath(g) {
     for (var i = 1; i <= g.numProperties; i++) {
         var it = g.property(i);
-        if (it.matchName === "ADBE Vector Shape - Group") return true;
+        if (PATHS[it.matchName]) return true;
         if (it.matchName === "ADBE Vector Group" && hasPath(it.property("ADBE Vectors Group"))) return true;
     }
     return false;
@@ -82,6 +141,7 @@ function easeAll(prop) {
         try { prop.setTemporalEaseAtKey(k, a, b); } catch (e2) {}
     }
 }
+function isShapeLayer(l) { try { return !l.property("ADBE Text Properties") && !!l.property("ADBE Root Vectors Group"); } catch (e) { return false; } }
 function layerByComment(c) { for (var i = 1; i <= comp.numLayers; i++) if (String(comp.layer(i).comment) === c) return comp.layer(i); return null; }
 
 // AE's own Create Shapes from Text: one group per character, the text layer stays as it is
@@ -109,18 +169,25 @@ if (phase === "read") {
         var m2 = String(c0.comment).match(/^SQ Write (?:piece|mark) (\w+)/);
         if (m2) { var tx = layerByComment(TAG + " source " + m2[1]); if (tx) c0 = tx; }
         if (seen[c0.index]) continue;
-        if (c0.property("ADBE Text Properties") && isArabicText(c0)) { src.push(c0); seen[c0.index] = 1; }
+        if ((c0.property("ADBE Text Properties") && isArabicText(c0)) || isShapeLayer(c0)) { src.push(c0); seen[c0.index] = 1; }
     }
-    if (!src.length) throw new Error("Select an Arabic text layer.");
+    if (!src.length) throw new Error("Select an Arabic text layer or a shape layer.");
     src.sort(function (a, b) { return a.index - b.index; });
     var out = { t0: comp.time, fd: comp.frameDuration, layers: [] };
     for (var n = 0; n < src.length; n++) {
         var L = src[n], em = 100;
+        if (isShapeLayer(L)) {
+            var all = [], fills = [], lines = [];
+            walk(L.property("ADBE Root Vectors Group"), [], [1, 0, 0, 1, 0, 0], all);
+            for (var a1 = 0; a1 < all.length; a1++) { if (all[a1].f) fills.push(all[a1]); else if (all[a1].s) lines.push(all[a1]); }
+            out.layers.push({ index: L.index, name: L.name, kind: "shape", em: 0, paths: fills, lines: lines, repeater: hasRepeater(L.property("ADBE Root Vectors Group")) });
+            continue;
+        }
         try { em = L.property("ADBE Text Properties").property("ADBE Text Document").value.fontSize; } catch (ef) {}
         var OL = makeOutlines(L), paths = [];
         walk(OL.property("ADBE Root Vectors Group"), [], [1, 0, 0, 1, 0, 0], paths);
         OL.remove();                              // read leaves the comp as it was; build makes them again
-        out.layers.push({ index: L.index, name: L.name, em: em, paths: paths });
+        out.layers.push({ index: L.index, name: L.name, kind: "text", em: em, paths: paths });
     }
     for (var s1 = 0; s1 < src.length; s1++) src[s1].selected = true;
     return JSON.stringify(out);
@@ -148,13 +215,16 @@ if (!data || !data.layers) throw new Error("Nothing to build.");
 var made = 0, marks = 0, bounce = !!params.bounce, pop = Math.max(0.05, Number(params.pop) || 0.35);
 for (var li = 0; li < data.layers.length; li++) {
     var D = data.layers[li], TXT = D.index <= comp.numLayers ? comp.layer(D.index) : null;
-    if (!TXT || TXT.name !== D.name) throw new Error("The text layer changed. Select it and press Write again.");
+    if (!TXT || TXT.name !== D.name) throw new Error("The layer changed. Select it and press Write again.");
+    var fromText = !!TXT.property("ADBE Text Properties");
     // running it again on the same text replaces the old Write-On
     var was = String(TXT.comment).match(/^SQ Write source (\w+)/);
     if (was) for (var w0 = comp.numLayers; w0 >= 1; w0--) { var cw = String(comp.layer(w0).comment); if (cw === TAG + " piece " + was[1] || cw === TAG + " mark " + was[1]) comp.layer(w0).remove(); }
     TXT.enabled = true;
     D.id = Math.floor(Math.random() * 1e9).toString(36);
-    var OL2 = makeOutlines(TXT);
+    var OL2;
+    if (fromText) OL2 = makeOutlines(TXT);
+    else { OL2 = TXT.duplicate(); OL2.enabled = true; try { OL2.comment = ""; } catch (ec) {} }
     var base = String(D.name).substring(0, 24), top = OL2, k2 = 0;
     // pieces: joined letters (or a single letter) written by their own Stroke
     for (var pi = 0; pi < D.pieces.length; pi++) {
@@ -221,8 +291,27 @@ for (var li = 0; li < data.layers.length; li++) {
         easeAll(SP);
         dm.moveBefore(top); top = dm; marks++;
     }
+    // stroke-only paths of a shape layer: one copy that draws them in stacking order with Trim Paths
+    if (D.lines && D.lines.refs && D.lines.refs.length) {
+        var dl = OL2.duplicate();
+        dl.enabled = true; dl.shy = false;
+        keepOnly(dl, D.lines.refs);
+        dl.name = TAG + " \u00B7 " + base + " \u00B7 lines";
+        dl.comment = TAG + " piece " + D.id;
+        dl.label = 10;
+        var RV = dl.property("ADBE Root Vectors Group");
+        RV.addProperty("ADBE Vector Filter - Trim");
+        var TP = dl.property("ADBE Root Vectors Group").property(dl.property("ADBE Root Vectors Group").numProperties);
+        TP.name = "SQ Write Trim";
+        try { TP.property("ADBE Vector Trim Type").setValue(2); } catch (et) {}       // Individually: one path after another
+        var TE = TP.property("ADBE Vector Trim End");
+        TE.setValueAtTime(D.lines.t0, 0); TE.setValueAtTime(D.lines.t1, 100);
+        try { TE.setInterpolationTypeAtKey(1, KeyframeInterpolationType.LINEAR, KeyframeInterpolationType.LINEAR); TE.setInterpolationTypeAtKey(2, KeyframeInterpolationType.LINEAR, KeyframeInterpolationType.LINEAR); } catch (el2) {}
+        dl.moveBefore(top); top = dl; made++;
+    }
     OL2.remove();
     TXT.enabled = false; TXT.comment = TAG + " source " + D.id;
 }
 return "Write-On ready: " + made + " piece" + (made === 1 ? "" : "s") + " and " + marks + " dot" + (marks === 1 ? "" : "s") +
-    ". Move the \"End\" keys of SQ Write (and the dots' Scale keys) to change the speed.";
+    ". Move the \"End\" keys of SQ Write / SQ Write Trim (and the dots' Scale keys) to change the speed." +
+    (data.warn && data.warn.length ? " Note: " + data.warn.join(", ") + "." : "");
